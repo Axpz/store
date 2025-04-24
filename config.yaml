@@ -1,0 +1,17 @@
+github:
+  repo:
+    owner: "Axpz"
+    name: "store"
+    branch: "main"
+    tables:
+      path: "tables"
+      users: "users.json"
+      comments: "comments.json"
+
+server:
+  port: 8080
+  host: "localhost"
+
+storage:
+  type: "local" # 可选值: "github" 或 "local"
+  path: "tables" # 仅当 type 为 "local" 时使用 
