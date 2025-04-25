@@ -1,7 +1,7 @@
 {
  "test-user-1": {
   "id": "test-user-1",
-  "username": "Test User",
+  "username": "Updated User",
   "password": "",
   "email": "test@example.com",
   "plan": "free",
