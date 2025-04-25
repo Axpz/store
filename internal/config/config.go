@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -13,6 +14,7 @@ type Config struct {
 	GitHub  GitHubConfig  `yaml:"github"`
 	Server  ServerConfig  `yaml:"server"`
 	Storage StorageConfig `yaml:"storage"`
+	JWT     JWTConfig     `yaml:"jwt"`
 }
 
 // GitHubConfig 表示 GitHub 相关配置
@@ -46,6 +48,12 @@ type ServerConfig struct {
 type StorageConfig struct {
 	Type string `yaml:"type"`
 	Path string `yaml:"path"`
+}
+
+// JWTConfig JWT配置
+type JWTConfig struct {
+	Secret string        `yaml:"secret"`
+	Expire time.Duration `yaml:"expire"`
 }
 
 // Load 从文件加载配置

@@ -42,21 +42,25 @@ func (s *LocalStore) Create(user User) error {
 }
 
 // Get 获取用户
-func (s *LocalStore) Get(id string) (User, error) {
+func (s *LocalStore) Get(id string) (*User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	// 确保用户表已加载
 	if err := s.loadUsers(); err != nil {
-		return User{}, err
+		return nil, err
 	}
 
 	user, exists := s.users[id]
 	if !exists {
-		return User{}, fmt.Errorf("用户不存在")
+		return nil, fmt.Errorf("用户不存在")
 	}
 
-	return user, nil
+	return &user, nil
+}
+
+func (s *LocalStore) GetByEmail(email string) (*User, error) {
+	return nil, nil
 }
 
 // Update 更新用户
@@ -114,21 +118,21 @@ func (s *LocalStore) CreateComment(comment Comment) error {
 }
 
 // GetComment 获取评论
-func (s *LocalStore) GetComment(id string) (Comment, error) {
+func (s *LocalStore) GetComment(id string) (*Comment, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	// 确保评论表已加载
 	if err := s.loadComments(); err != nil {
-		return Comment{}, err
+		return nil, err
 	}
 
 	comment, exists := s.comments[id]
 	if !exists {
-		return Comment{}, fmt.Errorf("评论不存在")
+		return nil, fmt.Errorf("评论不存在")
 	}
 
-	return comment, nil
+	return &comment, nil
 }
 
 // UpdateComment 更新评论

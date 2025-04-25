@@ -38,8 +38,8 @@ func setupTestStore(t *testing.T) (*LocalStore, string, func()) {
 }
 
 func TestLocalStore_UserCRUD(t *testing.T) {
-	store, _, _ := setupTestStore(t)
-	// defer cleanup()
+	store, _, cleanup := setupTestStore(t)
+	defer cleanup()
 
 	// 测试创建用户
 	user := User{
@@ -52,7 +52,7 @@ func TestLocalStore_UserCRUD(t *testing.T) {
 	// 测试获取用户
 	got, err := store.Get(user.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, user, got)
+	assert.Equal(t, user, *got)
 
 	// // 测试更新用户
 	user.Username = "Updated User"
@@ -61,7 +61,7 @@ func TestLocalStore_UserCRUD(t *testing.T) {
 
 	got, err = store.Get(user.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, user, got)
+	assert.Equal(t, user, *got)
 
 	// 测试删除用户
 	err = store.Delete(user.ID)
@@ -87,7 +87,7 @@ func TestLocalStore_CommentCRUD(t *testing.T) {
 	// 测试获取评论
 	got, err := store.GetComment(comment.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, comment, got)
+	assert.Equal(t, comment, *got)
 
 	// 测试更新评论
 	comment.Content = "Updated Comment"
@@ -96,7 +96,7 @@ func TestLocalStore_CommentCRUD(t *testing.T) {
 
 	got, err = store.GetComment(comment.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, comment, got)
+	assert.Equal(t, comment, *got)
 
 	// 测试删除评论
 	err = store.DeleteComment(comment.ID)

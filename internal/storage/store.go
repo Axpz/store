@@ -10,13 +10,14 @@ import (
 type StoreInterface interface {
 	// 用户相关操作
 	Create(user User) error
-	Get(id string) (User, error)
+	Get(id string) (*User, error)
+	GetByEmail(email string) (*User, error)
 	Update(user User) error
 	Delete(id string) error
 
 	// 评论相关操作
 	CreateComment(comment Comment) error
-	GetComment(id string) (Comment, error)
+	GetComment(id string) (*Comment, error)
 	UpdateComment(comment Comment) error
 	DeleteComment(id string) error
 }

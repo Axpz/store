@@ -28,26 +28,36 @@ func main() {
 
 	// 创建服务和处理器
 	userService := service.NewUserService(store)
-	userHandler := handler.NewUserHandler(userService)
+	userHandler := handler.NewUserHandler(userService, cfg.JWT.Secret)
 
 	// 设置路由
 	r := gin.Default()
 
+	// 添加CORS中间件
+	r.Use(middleware.CORS())
+
 	// 添加限速中间件
-	// 每分钟允许60个请求
+	// 每分钟允许10个请求
 	r.Use(middleware.RateLimit(10, time.Minute))
 
-	// 用户相关路由
-	r.POST("/users", userHandler.CreateUser)
-	r.GET("/users/:id", userHandler.GetUser)
-	r.PUT("/users/:id", userHandler.UpdateUser)
-	r.DELETE("/users/:id", userHandler.DeleteUser)
+	// 公开路由组
+	public := r.Group("/api")
+	{
+		// 登录注册等公开接口
+		public.POST("/login", userHandler.Login)
+		public.POST("/register", userHandler.Register)
+	}
 
-	// 评论相关路由
-	r.POST("/comments", userHandler.CreateComment)
-	r.GET("/comments/:id", userHandler.GetComment)
-	r.PUT("/comments/:id", userHandler.UpdateComment)
-	r.DELETE("/comments/:id", userHandler.DeleteComment)
+	// 需要认证的路由组
+	authorized := r.Group("/api")
+	authorized.Use(middleware.Auth(cfg.JWT.Secret))
+	{
+		// 用户相关路由
+		authorized.POST("/users", userHandler.CreateUser)
+		authorized.GET("/users/:id", userHandler.GetUser)
+		authorized.PUT("/users/:id", userHandler.UpdateUser)
+		authorized.DELETE("/users/:id", userHandler.DeleteUser)
+	}
 
 	// 启动服务器
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
