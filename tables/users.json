@@ -1,1 +1,11 @@
-{}
+{
+ "test-user-1": {
+  "id": "test-user-1",
+  "username": "Test User",
+  "password": "",
+  "email": "test@example.com",
+  "plan": "free",
+  "created": 1745550678,
+  "updated": 1745550678
+ }
+}
