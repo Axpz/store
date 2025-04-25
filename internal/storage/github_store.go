@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"time"
 
 	"github.com/Axpz/store/internal/config"
 	"github.com/google/go-github/v45/github"
@@ -186,6 +187,7 @@ func (s *GitHubStore) DeleteComment(id string) error {
 
 // loadTable 加载指定表的数据
 func (s *GitHubStore) loadTable(tableName string, data any) error {
+	s.timestamp = time.Now().Unix()
 	// 获取文件内容
 	content, _, _, err := s.client.Repositories.GetContents(
 		s.ctx,
@@ -215,51 +217,83 @@ func (s *GitHubStore) loadTable(tableName string, data any) error {
 }
 
 // saveTable 保存指定表的数据
-func (s *GitHubStore) saveTable(tableName string, data any) error {
-	// 序列化为 JSON
-	jsonData, err := json.MarshalIndent(data, "", " ")
-	if err != nil {
-		return fmt.Errorf("序列化 JSON 失败: %v", err)
+func (s *GitHubStore) saveTable(tableName string, data any) (err error) {
+	doSave := func() error {
+		// 序列化为 JSON
+		jsonData, e := json.Marshal(data)
+		if err != nil {
+			return fmt.Errorf("序列化 JSON 失败: %v", e)
+		}
+
+		// 获取当前文件的 SHA
+		content, _, _, err := s.client.Repositories.GetContents(
+			s.ctx,
+			s.config.GitHub.Repo.Owner,
+			s.config.GitHub.Repo.Name,
+			s.config.GetTablePath(tableName),
+			&github.RepositoryContentGetOptions{
+				Ref: s.config.GitHub.Repo.Branch,
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("获取文件 SHA 失败: %v", err)
+		}
+
+		// 创建提交
+		opts := &github.RepositoryContentFileOptions{
+			Message: github.String(fmt.Sprintf("Update %s table", tableName)),
+			Content: jsonData,
+			SHA:     content.SHA,
+			Branch:  github.String(s.config.GitHub.Repo.Branch),
+		}
+
+		_, _, err = s.client.Repositories.CreateFile(
+			s.ctx,
+			s.config.GitHub.Repo.Owner,
+			s.config.GitHub.Repo.Name,
+			s.config.GetTablePath(tableName),
+			opts,
+		)
+		if err != nil {
+			return fmt.Errorf("创建文件失败: %v", err)
+		}
+
+		return nil
 	}
 
-	// 获取当前文件的 SHA
-	content, _, _, err := s.client.Repositories.GetContents(
-		s.ctx,
-		s.config.GitHub.Repo.Owner,
-		s.config.GitHub.Repo.Name,
-		s.config.GetTablePath(tableName),
-		&github.RepositoryContentGetOptions{
-			Ref: s.config.GitHub.Repo.Branch,
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("获取文件 SHA 失败: %v", err)
+	if s.waiting {
+		return
 	}
 
-	// 创建提交
-	opts := &github.RepositoryContentFileOptions{
-		Message: github.String(fmt.Sprintf("Update %s table", tableName)),
-		Content: jsonData,
-		SHA:     content.SHA,
-		Branch:  github.String(s.config.GitHub.Repo.Branch),
+	now := time.Now().Unix()
+	delaySecond := 10
+
+	// 超过10s做一次物理存储，并更新时间戳
+	if now-s.timestamp > int64(delaySecond) {
+		s.timestamp = now
+		return doSave()
 	}
 
-	_, _, err = s.client.Repositories.CreateFile(
-		s.ctx,
-		s.config.GitHub.Repo.Owner,
-		s.config.GitHub.Repo.Name,
-		s.config.GetTablePath(tableName),
-		opts,
-	)
-	if err != nil {
-		return fmt.Errorf("创建文件失败: %v", err)
-	}
+	// 未超过10s等待10s之后再做物理存储，并更新时间戳
+	s.waiting = true
+	defer func() {
+		s.waiting = false
+	}()
 
-	return nil
+	duration := time.Duration(delaySecond) * time.Second
+	time.AfterFunc(duration, func() {
+		s.timestamp = now
+		err = doSave()
+	})
+	return
 }
 
 func (s *GitHubStore) loadUsers() error {
-	if err := s.loadTable("users", s.users); err != nil {
+	if s.loaded["users"] {
+		return nil
+	}
+
+	if err := s.loadTable("users", &s.users); err != nil {
 		return fmt.Errorf("加载用户表失败: %v", err)
 	}
 	s.loaded["users"] = true
@@ -271,7 +305,11 @@ func (s *GitHubStore) saveUsers() error {
 }
 
 func (s *GitHubStore) loadComments() error {
-	if err := s.loadTable("comments", s.users); err != nil {
+	if s.loaded["comments"] {
+		return nil
+	}
+
+	if err := s.loadTable("comments", &s.comments); err != nil {
 		return fmt.Errorf("加载用户表失败: %v", err)
 	}
 	s.loaded["comments"] = true
