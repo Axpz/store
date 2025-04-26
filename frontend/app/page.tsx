@@ -42,7 +42,7 @@ export default function Home() {
             <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Pricing</a>
           </div>
           <div className="flex items-center space-x-4">
-            <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Log In</a>
+            <a href="/login" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Log In</a>
             <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Contact</a>
             <a href="/signup" className="bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-md text-sm font-medium">Sign Up</a>
           </div>

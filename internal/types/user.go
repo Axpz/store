@@ -6,7 +6,7 @@ import "golang.org/x/crypto/bcrypt"
 type User struct {
 	ID       string `json:"id"`
 	Username string `json:"username"`
-	Password string `json:"-"` // 密码不会在JSON中返回
+	Password string `json:"password"`
 	Email    string `json:"email"`
 	Plan     string `json:"plan"`
 	Created  int64  `json:"created"`

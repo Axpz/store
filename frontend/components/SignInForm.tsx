@@ -4,7 +4,7 @@ import { useState } from 'react';
 import * as Form from '@radix-ui/react-form';
 import { useRouter } from 'next/navigation';
 
-export default function SignUpForm() {
+export default function SignInForm() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -18,27 +18,35 @@ export default function SignUpForm() {
     const data = {
       email: formData.get('email'),
       password: formData.get('password'),
-      username: formData.get('username'),
+      remember: formData.get('remember-me') === 'on',
     };
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/signup', {
+      const response = await fetch('http://localhost:8080/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to sign up');
+        throw new Error(error.error || 'Login failed');
       }
 
-      // Redirect to login page after successful signup
-      router.push('/login');
+      // 如果选择了记住我，在前端也设置一个标记
+      if (data.remember) {
+        localStorage.setItem('rememberMe', 'true');
+      } else {
+        localStorage.removeItem('rememberMe');
+      }
+
+      // Redirect to home page after successful signin
+      router.push('/');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Sign up failed, please try again');
+      setError(err instanceof Error ? err.message : 'Login failed, please try again');
     } finally {
       setIsLoading(false);
     }
@@ -51,27 +59,6 @@ export default function SignUpForm() {
           {error}
         </div>
       )}
-
-      <div>
-        <Form.Field name="username">
-          <div className="flex items-center justify-between">
-            <Form.Label className="block text-base font-medium text-gray-700 dark:text-gray-300">
-              Username
-            </Form.Label>
-            <Form.Message className="text-sm text-red-600 dark:text-red-400" match="valueMissing">
-              Please enter your username
-            </Form.Message>
-          </div>
-          <Form.Control asChild>
-            <input
-              type="text"
-              required
-              className="mt-2 block w-full px-2 py-2 text-base bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-              placeholder="Enter your name"
-            />
-          </Form.Control>
-        </Form.Field>
-      </div>
 
       <div>
         <Form.Field name="email">
@@ -104,7 +91,7 @@ export default function SignUpForm() {
               Password
             </Form.Label>
             <Form.Message className="text-sm text-red-600 dark:text-red-400" match="valueMissing">
-              Please enter a password
+              Please enter your password
             </Form.Message>
           </div>
           <Form.Control asChild>
@@ -113,11 +100,30 @@ export default function SignUpForm() {
               required
               className="mt-2 block w-full px-2 py-2 text-base bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
               placeholder="••••••••"
-              minLength={8}
             />
           </Form.Control>
-          <p className="mt-2 text-sm text-gray-500">Password must be at least 8 characters</p>
         </Form.Field>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <div className="flex items-center">
+          <input
+            id="remember-me"
+            name="remember-me"
+            type="checkbox"
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            defaultChecked={typeof window !== 'undefined' && localStorage.getItem('rememberMe') === 'true'}
+          />
+          <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900 dark:text-gray-300">
+            Remember me
+          </label>
+        </div>
+
+        <div className="text-sm">
+          <a href="#" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+            Forgot your password?
+          </a>
+        </div>
       </div>
 
       <Form.Submit asChild>
@@ -126,7 +132,7 @@ export default function SignUpForm() {
           disabled={isLoading}
           className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isLoading ? 'Signing up...' : 'Sign up'}
+          {isLoading ? 'Logging in...' : 'Login'}
         </button>
       </Form.Submit>
     </Form.Root>

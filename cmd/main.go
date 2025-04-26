@@ -52,7 +52,7 @@ func main() {
 	{
 		// 登录注册等公开接口
 		public.POST("/auth/login", userHandler.Login)
-		public.POST("/auth/register", userHandler.Register)
+		public.POST("/auth/signup", userHandler.SignUp)
 	}
 
 	// 需要认证的路由组

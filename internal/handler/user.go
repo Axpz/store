@@ -9,6 +9,7 @@ import (
 	"github.com/Axpz/store/internal/types"
 	"github.com/Axpz/store/internal/utils"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // UserHandler 用户处理器
@@ -33,6 +34,11 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
+	var logger = utils.LoggerFromContext(c.Request.Context())
+	logReq := req
+	logReq.Password = "*"
+	logger.Info("Login", zap.Any("req", logReq))
+
 	user, err := h.userService.GetUser(c, utils.GetUserIDFromEmail(req.Email))
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
@@ -45,30 +51,48 @@ func (h *UserHandler) Login(c *gin.Context) {
 	}
 
 	// 生成token
-	token, err := jwt.GenerateToken(user.ID, user.Username, h.jwtSecret, 24*time.Hour)
+	token, err := jwt.GenerateToken(user.ID, user.Username, h.jwtSecret, 7*24*time.Hour)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成token失败"})
 		return
 	}
 
+	// 设置httponly cookie，有效期7天
+	c.SetCookie(
+		"token",    // cookie name
+		token,      // cookie value
+		7*24*60*60, // max age in seconds (7 days)
+		"/",        // path
+		"",         // domain
+		true,       // secure
+		true,       // httponly
+	)
+
+	user.Password = "*"
 	c.JSON(http.StatusOK, types.LoginResponse{
 		Token: token,
 		User:  *user,
 	})
 }
 
-// Register 处理用户注册
-func (h *UserHandler) Register(c *gin.Context) {
+// SignUp 处理用户注册
+func (h *UserHandler) SignUp(c *gin.Context) {
 	h.CreateUser(c)
 }
 
 // CreateUser 创建用户
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req types.RegisterRequest
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
 		return
 	}
+
+	var logger = utils.LoggerFromContext(c.Request.Context())
+	logReq := req
+	logReq.Password = "*"
+	logger.Info("CreateUser", zap.Any("req", logReq))
 
 	// 创建用户
 	user := types.User{
