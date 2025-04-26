@@ -7,6 +7,7 @@ import (
 	"github.com/Axpz/store/internal/pkg/jwt"
 	"github.com/Axpz/store/internal/service"
 	"github.com/Axpz/store/internal/types"
+	"github.com/Axpz/store/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,7 +33,7 @@ func (h *UserHandler) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByEmail(req.Email)
+	user, err := h.userService.GetUser(c, utils.GetUserIDFromEmail(req.Email))
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
 		return
@@ -58,6 +59,11 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 // Register 处理用户注册
 func (h *UserHandler) Register(c *gin.Context) {
+	h.CreateUser(c)
+}
+
+// CreateUser 创建用户
+func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req types.RegisterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
@@ -65,7 +71,7 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	// 创建用户
-	user := &types.User{
+	user := types.User{
 		Username: req.Username,
 		Password: req.Password,
 		Email:    req.Email,
@@ -78,34 +84,24 @@ func (h *UserHandler) Register(c *gin.Context) {
 	}
 
 	// 保存用户
-	if _, err := h.userService.CreateUser(user.Username, user.Email, user.Plan); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建用户失败"})
+	if err := h.userService.CreateUser(c, &user); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusCreated, user)
-}
-
-// CreateUser 创建用户
-func (h *UserHandler) CreateUser(c *gin.Context) {
-	var user types.User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
+	userGet, err := h.userService.GetUser(c, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建用户后获取用户失败"})
 		return
 	}
 
-	if _, err := h.userService.CreateUser(user.Username, user.Email, user.Plan); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建用户失败"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, user)
+	c.JSON(http.StatusCreated, userGet)
 }
 
 // GetUser 获取用户信息
 func (h *UserHandler) GetUser(c *gin.Context) {
 	id := c.Param("id")
-	user, err := h.userService.GetUser(id)
+	user, err := h.userService.GetUser(c, id)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 		return
@@ -123,8 +119,8 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	if _, err := h.userService.UpdateUser(id, user.Username, user.Email, user.Plan); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新用户失败"})
+	if err := h.userService.UpdateUser(c, id, user.Username, user.Email, user.Plan); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
@@ -134,8 +130,8 @@ func (h *UserHandler) UpdateUser(c *gin.Context) {
 // DeleteUser 删除用户
 func (h *UserHandler) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
-	if err := h.userService.DeleteUser(id); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除用户失败"})
+	if err := h.userService.DeleteUser(c, id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 

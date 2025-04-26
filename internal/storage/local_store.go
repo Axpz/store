@@ -42,25 +42,24 @@ func (s *LocalStore) Create(user User) error {
 }
 
 // Get 获取用户
-func (s *LocalStore) Get(id string) (*User, error) {
+func (s *LocalStore) Get(id string) (User, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	var result User
+
 	// 确保用户表已加载
 	if err := s.loadUsers(); err != nil {
-		return nil, err
+		return result, err
 	}
 
 	user, exists := s.users[id]
 	if !exists {
-		return nil, fmt.Errorf("用户不存在")
+		return result, fmt.Errorf("用户不存在")
 	}
 
-	return &user, nil
-}
-
-func (s *LocalStore) GetByEmail(email string) (*User, error) {
-	return nil, nil
+	result = user
+	return result, nil
 }
 
 // Update 更新用户
@@ -68,7 +67,6 @@ func (s *LocalStore) Update(user User) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// 确保用户表已加载
 	if err := s.loadUsers(); err != nil {
 		return err
 	}
@@ -86,7 +84,6 @@ func (s *LocalStore) Delete(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// 确保用户表已加载
 	if err := s.loadUsers(); err != nil {
 		return err
 	}
@@ -104,7 +101,6 @@ func (s *LocalStore) CreateComment(comment Comment) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// 确保评论表已加载
 	if err := s.loadComments(); err != nil {
 		return err
 	}
@@ -118,21 +114,22 @@ func (s *LocalStore) CreateComment(comment Comment) error {
 }
 
 // GetComment 获取评论
-func (s *LocalStore) GetComment(id string) (*Comment, error) {
+func (s *LocalStore) GetComment(id string) (Comment, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// 确保评论表已加载
+	var result Comment
+
 	if err := s.loadComments(); err != nil {
-		return nil, err
+		return result, err
 	}
 
-	comment, exists := s.comments[id]
+	result, exists := s.comments[id]
 	if !exists {
-		return nil, fmt.Errorf("评论不存在")
+		return result, fmt.Errorf("评论不存在")
 	}
 
-	return &comment, nil
+	return result, nil
 }
 
 // UpdateComment 更新评论
@@ -140,7 +137,6 @@ func (s *LocalStore) UpdateComment(comment Comment) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// 确保评论表已加载
 	if err := s.loadComments(); err != nil {
 		return err
 	}
@@ -158,7 +154,6 @@ func (s *LocalStore) DeleteComment(id string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	// 确保评论表已加载
 	if err := s.loadComments(); err != nil {
 		return err
 	}

@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"time"
 
 	"github.com/Axpz/store/internal/config"
 	"github.com/google/go-github/v45/github"
@@ -15,7 +14,6 @@ import (
 // GitHubStore 实现使用 GitHub 作为存储
 type GitHubStore struct {
 	client *github.Client
-	ctx    context.Context
 
 	Store
 }
@@ -34,7 +32,6 @@ func NewGitHubStore(cfg *config.Config) (StoreInterface, error) {
 
 	store := &GitHubStore{
 		client: client,
-		ctx:    ctx,
 		Store:  NewStore(cfg),
 	}
 
@@ -60,25 +57,23 @@ func (s *GitHubStore) Create(user User) error {
 }
 
 // Get 获取用户
-func (s *GitHubStore) Get(id string) (*User, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *GitHubStore) Get(id string) (User, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var result User
 
 	// 确保用户表已加载
 	if err := s.loadUsers(); err != nil {
-		return nil, err
+		return result, err
 	}
 
-	user, exists := s.users[id]
+	result, exists := s.users[id]
 	if !exists {
-		return nil, fmt.Errorf("用户不存在")
+		return result, fmt.Errorf("用户不存在")
 	}
 
-	return &user, nil
-}
-
-func (s *GitHubStore) GetByEmail(email string) (*User, error) {
-	return nil, nil
+	return result, nil
 }
 
 // Update 更新用户
@@ -136,21 +131,24 @@ func (s *GitHubStore) CreateComment(comment Comment) error {
 }
 
 // GetComment 获取评论
-func (s *GitHubStore) GetComment(id string) (*Comment, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *GitHubStore) GetComment(id string) (Comment, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	var result Comment
 
 	// 确保评论表已加载
 	if err := s.loadComments(); err != nil {
-		return nil, err
+		return result, err
 	}
 
 	comment, exists := s.comments[id]
 	if !exists {
-		return nil, fmt.Errorf("评论不存在")
+		return result, fmt.Errorf("评论不存在")
 	}
 
-	return &comment, nil
+	result = comment
+	return result, nil
 }
 
 // UpdateComment 更新评论
@@ -191,8 +189,6 @@ func (s *GitHubStore) DeleteComment(id string) error {
 
 // loadTable 加载指定表的数据
 func (s *GitHubStore) loadTable(tableName string, data any) error {
-	s.timestamp = time.Now().Unix()
-	// 获取文件内容
 	content, _, _, err := s.client.Repositories.GetContents(
 		s.ctx,
 		s.config.GitHub.Repo.Owner,
@@ -265,31 +261,7 @@ func (s *GitHubStore) saveTable(tableName string, data any) (err error) {
 		return nil
 	}
 
-	if s.waiting {
-		return
-	}
-
-	now := time.Now().Unix()
-	delaySecond := 10
-
-	// 超过10s做一次物理存储，并更新时间戳
-	if now-s.timestamp > int64(delaySecond) {
-		s.timestamp = now
-		return doSave()
-	}
-
-	// 未超过10s等待10s之后再做物理存储，并更新时间戳
-	s.waiting = true
-	defer func() {
-		s.waiting = false
-	}()
-
-	duration := time.Duration(delaySecond) * time.Second
-	time.AfterFunc(duration, func() {
-		s.timestamp = now
-		err = doSave()
-	})
-	return
+	return s.throttlesaver.RequestMustSave(doSave)
 }
 
 func (s *GitHubStore) loadUsers() error {

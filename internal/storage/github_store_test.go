@@ -72,7 +72,7 @@ func TestGitHubStore_UserCRUD(t *testing.T) {
 	// 测试获取用户
 	got, err := store.Get(user.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, user, *got)
+	assert.Equal(t, user, got)
 
 	// 测试更新用户
 	user.Username = "Updated User"
@@ -81,7 +81,7 @@ func TestGitHubStore_UserCRUD(t *testing.T) {
 
 	got, err = store.Get(user.ID)
 	assert.NoError(t, err)
-	assert.Equal(t, user, *got)
+	assert.Equal(t, user, got)
 
 	// 测试删除用户
 	err = store.Delete(user.ID)

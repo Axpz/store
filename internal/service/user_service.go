@@ -6,6 +6,9 @@ import (
 
 	"github.com/Axpz/store/internal/storage"
 	"github.com/Axpz/store/internal/types"
+	"github.com/Axpz/store/internal/utils"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 // UserService 提供用户相关的业务逻辑
@@ -21,53 +24,42 @@ func NewUserService(store storage.StoreInterface) *UserService {
 }
 
 // CreateUser 创建新用户
-func (s *UserService) CreateUser(username, email, plan string) (*types.User, error) {
-	// 生成用户ID (在实际应用中，可能需要更复杂的ID生成策略)
-	userID := fmt.Sprintf("user_%d", time.Now().UnixNano())
+func (s *UserService) CreateUser(c *gin.Context, user *types.User) error {
 
 	// 创建用户对象
-	user := types.User{
-		ID:       userID,
-		Username: username,
-		Email:    email,
-		Plan:     plan,
-		Created:  time.Now().Unix(),
-		Updated:  time.Now().Unix(),
-	}
+	user.ID = utils.GetUserIDFromEmail(user.Email)
+	user.Created = time.Now().Unix()
+	user.Updated = time.Now().Unix()
+
+	logger := utils.LoggerFromContext(c.Request.Context())
 
 	// 保存用户
-	if err := s.store.Create(user); err != nil {
-		return nil, fmt.Errorf("创建用户失败: %v", err)
+	if err := s.store.Create(storage.User(*user)); err != nil {
+		logger.Error("创建用户失败", zap.Error(err))
+		return fmt.Errorf("创建用户失败: %v", err)
 	}
 
-	return &user, nil
+	return nil
 }
 
 // GetUser 获取用户信息
-func (s *UserService) GetUser(id string) (*types.User, error) {
+func (s *UserService) GetUser(c *gin.Context, id string) (*types.User, error) {
+	logger := utils.LoggerFromContext(c.Request.Context())
+	logger.Info("获取用户", zap.String("id", id))
 	user, err := s.store.Get(id)
 	if err != nil {
 		return nil, fmt.Errorf("获取用户失败: %v", err)
 	}
 
-	return user, nil
-}
-
-func (s *UserService) GetUserByEmail(email string) (*types.User, error) {
-	user, err := s.store.GetByEmail(email)
-	if err != nil {
-		return nil, fmt.Errorf("获取用户失败: %v", err)
-	}
-
-	return user, nil
+	return &user, nil
 }
 
 // UpdateUser 更新用户信息
-func (s *UserService) UpdateUser(id, username, email, plan string) (*types.User, error) {
+func (s *UserService) UpdateUser(c *gin.Context, id, username, email, plan string) error {
 	// 获取现有用户
 	existingUser, err := s.store.Get(id)
 	if err != nil {
-		return nil, fmt.Errorf("获取用户失败: %v", err)
+		return fmt.Errorf("获取用户失败: %v", err)
 	}
 
 	// 更新用户信息
@@ -77,15 +69,15 @@ func (s *UserService) UpdateUser(id, username, email, plan string) (*types.User,
 	existingUser.Updated = time.Now().Unix()
 
 	// 保存更新
-	if err := s.store.Update(*existingUser); err != nil {
-		return nil, fmt.Errorf("更新用户失败: %v", err)
+	if err := s.store.Update(existingUser); err != nil {
+		return fmt.Errorf("更新用户失败: %v", err)
 	}
 
-	return existingUser, nil
+	return nil
 }
 
 // DeleteUser 删除用户
-func (s *UserService) DeleteUser(id string) error {
+func (s *UserService) DeleteUser(c *gin.Context, id string) error {
 	// 检查用户是否存在
 	if _, err := s.store.Get(id); err != nil {
 		return fmt.Errorf("用户不存在: %v", err)

@@ -94,7 +94,7 @@ func (c *Config) validate() error {
 	if c.Storage.Type == "github" {
 		token := os.Getenv("GITHUB_API_TOKEN")
 		if token == "" {
-			return fmt.Errorf("未设置 GITHUB_TOKEN 环境变量")
+			return fmt.Errorf("未设置 GITHUB_API_TOKEN 环境变量")
 		}
 
 		c.GitHub.Token = token

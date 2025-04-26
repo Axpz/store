@@ -1,6 +1,7 @@
 # Go parameters
 GOCMD=go
 GOBUILD=$(GOCMD) build
+GORUN=$(GOCMD) run
 GOCLEAN=$(GOCMD) clean
 GOTEST=$(GOCMD) test
 GOGET=$(GOCMD) get
@@ -10,12 +11,18 @@ BINARY_UNIX=$(BINARY_NAME)_unix
 # Build flags
 LDFLAGS=-ldflags "-s -w"
 
-.PHONY: all build test clean get-deps
+.PHONY: all build run tidy test clean get-deps
 
 all: test build
 
 build:
 	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) ./cmd/
+
+run:
+	$(GORUN) $(LDFLAGS) ./cmd/main.go
+
+tidy:
+	$(GOCMD) mod tidy
 
 test:
 	$(GOTEST) -v ./...
