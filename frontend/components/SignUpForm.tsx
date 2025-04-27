@@ -47,7 +47,7 @@ export default function SignUpForm() {
   return (
     <Form.Root className="space-y-8" onSubmit={handleSubmit}>
       {error && (
-        <div className="p-4 text-base text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300" role="alert">
+        <div className="p-4 text-lg text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300" role="alert">
           {error}
         </div>
       )}
@@ -55,7 +55,7 @@ export default function SignUpForm() {
       <div>
         <Form.Field name="username">
           <div className="flex items-center justify-between">
-            <Form.Label className="block text-base font-medium text-gray-700 dark:text-gray-300">
+            <Form.Label className="block text-lg font-medium text-gray-700 dark:text-gray-300">
               Username
             </Form.Label>
             <Form.Message className="text-sm text-red-600 dark:text-red-400" match="valueMissing">
@@ -76,7 +76,7 @@ export default function SignUpForm() {
       <div>
         <Form.Field name="email">
           <div className="flex items-center justify-between">
-            <Form.Label className="block text-base font-medium text-gray-700 dark:text-gray-300">
+            <Form.Label className="block text-lg font-medium text-gray-700 dark:text-gray-300">
               Email Address
             </Form.Label>
             <Form.Message className="text-sm text-red-600 dark:text-red-400" match="valueMissing">
@@ -100,7 +100,7 @@ export default function SignUpForm() {
       <div>
         <Form.Field name="password">
           <div className="flex items-center justify-between">
-            <Form.Label className="block text-base font-medium text-gray-700 dark:text-gray-300">
+            <Form.Label className="block text-lg font-medium text-gray-700 dark:text-gray-300">
               Password
             </Form.Label>
             <Form.Message className="text-sm text-red-600 dark:text-red-400" match="valueMissing">
@@ -124,7 +124,7 @@ export default function SignUpForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? 'Signing up...' : 'Sign up'}
         </button>

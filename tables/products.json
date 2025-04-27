@@ -1,0 +1,10 @@
+{
+  "product_id": {
+    "product_id": "string",
+    "product_name": "string",
+    "product_type": "string",
+    "product_description": "string",
+    "price": 1999,
+    "currency": "CNY"
+  }
+}

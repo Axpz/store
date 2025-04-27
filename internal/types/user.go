@@ -4,13 +4,14 @@ import "golang.org/x/crypto/bcrypt"
 
 // User 用户信息
 type User struct {
-	ID       string `json:"id"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Email    string `json:"email"`
-	Plan     string `json:"plan"`
-	Created  int64  `json:"created"`
-	Updated  int64  `json:"updated"`
+	ID        string `json:"id"`
+	Username  string `json:"username"`
+	Password  string `json:"password"`
+	Email     string `json:"email"`
+	Plan      string `json:"plan"`
+	Created   int64  `json:"created"`
+	Updated   int64  `json:"updated"`
+	LastLogin int64  `json:"last_login"` // 最后登录时间
 }
 
 // CreateUserRequest 创建用户请求

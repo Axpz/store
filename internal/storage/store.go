@@ -7,6 +7,7 @@ import (
 
 	"github.com/Axpz/store/internal/config"
 	"github.com/Axpz/store/internal/pkg/throttle"
+	"go.uber.org/zap"
 )
 
 // StoreInterface 定义存储接口
@@ -16,6 +17,13 @@ type StoreInterface interface {
 	Get(id string) (User, error)
 	Update(user User) error
 	Delete(id string) error
+
+	// 订单相关操作
+	CreateOrder(order Order) error
+	GetOrder(id string) (Order, error)
+	GetOrdersByUserID(userID string) ([]Order, error)
+	UpdateOrder(order Order) error
+	DeleteOrder(id string) error
 
 	// 评论相关操作
 	CreateComment(comment Comment) error
@@ -31,11 +39,13 @@ type Store struct {
 
 	config *config.Config
 	loaded map[string]bool
+
 	Tables
 }
 
 type Tables struct {
 	users    map[string]User
+	orders   map[string]Order
 	comments map[string]Comment
 }
 
@@ -52,4 +62,8 @@ func NewStore(cfg *config.Config) Store {
 			comments: make(map[string]Comment),
 		},
 	}
+}
+
+func (s *Store) Logger() *zap.Logger {
+	return s.config.Logger
 }

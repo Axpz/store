@@ -30,6 +30,7 @@ func (s *UserService) CreateUser(c *gin.Context, user *types.User) error {
 	user.ID = utils.GetUserIDFromEmail(user.Email)
 	user.Created = time.Now().Unix()
 	user.Updated = time.Now().Unix()
+	user.LastLogin = time.Now().Unix()
 
 	logger := utils.LoggerFromContext(c.Request.Context())
 
@@ -67,6 +68,25 @@ func (s *UserService) UpdateUser(c *gin.Context, id, username, email, plan strin
 	existingUser.Email = email
 	existingUser.Plan = plan
 	existingUser.Updated = time.Now().Unix()
+
+	// 保存更新
+	if err := s.store.Update(existingUser); err != nil {
+		return fmt.Errorf("更新用户失败: %v", err)
+	}
+
+	return nil
+}
+
+// UpdateUser 更新用户信息
+func (s *UserService) UpdateUserLastLogin(c *gin.Context, id string) error {
+	// 获取现有用户
+	existingUser, err := s.store.Get(id)
+	if err != nil {
+		return fmt.Errorf("获取用户失败: %v", err)
+	}
+
+	// 更新用户信息
+	existingUser.LastLogin = time.Now().Unix()
 
 	// 保存更新
 	if err := s.store.Update(existingUser); err != nil {

@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"time"
 
+	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
 )
 
@@ -15,6 +16,8 @@ type Config struct {
 	Server  ServerConfig  `yaml:"server"`
 	Storage StorageConfig `yaml:"storage"`
 	JWT     JWTConfig     `yaml:"jwt"`
+
+	Logger *zap.Logger
 }
 
 // GitHubConfig 表示 GitHub 相关配置
@@ -36,6 +39,7 @@ type TablesConfig struct {
 	Path     string `yaml:"path"`
 	Users    string `yaml:"users"`
 	Comments string `yaml:"comments"`
+	Orders   string `yaml:"orders"`
 }
 
 // ServerConfig 表示服务器配置
@@ -139,6 +143,8 @@ func (c *Config) GetTablePath(tableName string) string {
 		return filepath.Join(c.GitHub.Repo.Tables.Path, c.GitHub.Repo.Tables.Users)
 	case "comments":
 		return filepath.Join(c.GitHub.Repo.Tables.Path, c.GitHub.Repo.Tables.Comments)
+	case "orders":
+		return filepath.Join(c.GitHub.Repo.Tables.Path, c.GitHub.Repo.Tables.Orders)
 	default:
 		return ""
 	}

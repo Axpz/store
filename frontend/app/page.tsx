@@ -1,6 +1,26 @@
+'use client';
+
 import Image from "next/image";
+import { useUser } from "../context/UserContext";
+import { useState } from "react";
 
 export default function Home() {
+  const { user, logout } = useUser();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      setLogoutError('');
+      await logout();
+    } catch (error) {
+      setLogoutError('Failed to logout. Please try again.');
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
+
   const templates = [
     {
       title: "Dashboard Template",
@@ -34,24 +54,46 @@ export default function Home() {
             </a>
           </div>
           <div className="hidden md:flex items-center space-x-8">
-            <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Products</a>
-            <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Solutions</a>
+            <a href="#" className="text-lg text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Products</a>
+            <a href="#" className="text-lg text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Solutions</a>
             {/* <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Resources</a>
             <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Enterprise</a> */}
-            <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Docs</a>
-            <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Pricing</a>
+            <a href="#" className="text-lg text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Docs</a>
+            <a href="#" className="text-lg text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Pricing</a>
           </div>
           <div className="flex items-center space-x-4">
-            <a href="/login" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Log In</a>
-            <a href="#" className="text-sm text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Contact</a>
-            <a href="/signup" className="bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-md text-sm font-medium">Sign Up</a>
+            {user ? (
+              <div className="flex items-center space-x-4">
+                <span className="text-lg text-gray-600 dark:text-gray-400">
+                  {user.username}
+                </span>
+                <button
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="text-lg text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isLoggingOut ? 'Logging out...' : 'Logout'}
+                </button>
+                {logoutError && (
+                  <span className="text-lg text-red-600 dark:text-red-400">
+                    {logoutError}
+                  </span>
+                )}
+              </div>
+            ) : (
+              <>
+                <a href="/login" className="text-lg text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Log In</a>
+                <a href="#" className="text-lg text-gray-600 hover:text-black dark:text-gray-400 dark:hover:text-white">Contact</a>
+                <a href="/signup" className="bg-black text-white dark:bg-white dark:text-black px-4 py-2 rounded-md text-lg font-medium">Sign Up</a>
+              </>
+            )}
           </div>
         </div>
       </nav>
       <div className="min-h-screen pt-24 p-8 flex flex-col items-center justify-center text-center max-w-7xl mx-auto">
         <main className="flex flex-col items-center gap-12 w-full">
           <div className="text-center max-w-4xl">
-            <h1 className="text-[64px] font-bold leading-tight tracking-tight">
+            <h1 className="text-[32px] font-bold leading-tight tracking-tight">
               Radix UI templates and examples
             </h1>
             <p className="text-xl text-gray-600 dark:text-gray-400 mt-6">
@@ -71,8 +113,8 @@ export default function Home() {
                   />
                 </div>
                 <div className="p-6">
-                  <h3 className="text-lg font-semibold">{template.title}</h3>
-                  <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+                  <h3 className="text-xl font-semibold">{template.title}</h3>
+                  <p className="mt-2 text-lg text-gray-600 dark:text-gray-400">
                     {template.description}
                   </p>
                 </div>

@@ -26,6 +26,27 @@ func NewUserHandler(userService *service.UserService, jwtSecret string) *UserHan
 	}
 }
 
+func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
+	auth := router.Group("/api/auth")
+	{
+		// 登录注册等公开接口
+		auth.POST("/login", h.Login)
+		auth.POST("/logout", h.Logout)
+		auth.POST("/signup", h.SignUp)
+	}
+
+	// 需要认证的路由组
+	user := router.Group("/api/users")
+	// authorized.Use(middleware.Auth(cfg.JWT.Secret))
+	{
+		// 用户相关路由
+		user.POST("", h.CreateUser)
+		user.GET("/:id", h.GetUser)
+		user.PUT("/:id", h.UpdateUser)
+		user.DELETE("/:id", h.DeleteUser)
+	}
+}
+
 // Login 处理用户登录
 func (h *UserHandler) Login(c *gin.Context) {
 	var req types.LoginRequest
@@ -41,9 +62,11 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	user, err := h.userService.GetUser(c, utils.GetUserIDFromEmail(req.Email))
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
 		return
 	}
+
+	h.userService.UpdateUserLastLogin(c, user.ID)
 
 	if !user.CheckPassword(req.Password) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
@@ -73,6 +96,13 @@ func (h *UserHandler) Login(c *gin.Context) {
 		Token: token,
 		User:  *user,
 	})
+
+}
+
+// Logout 处理用户登出
+func (h *UserHandler) Logout(c *gin.Context) {
+	c.SetCookie("token", "", -1, "/", "", true, true)
+	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
 
 // SignUp 处理用户注册

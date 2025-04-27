@@ -6,6 +6,7 @@ import (
 
 // User 表示用户数据模型
 type User = types.User
+type Order = types.Order
 
 // Comment 表示评论数据模型
 type Comment struct {

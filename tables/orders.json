@@ -1,0 +1,11 @@
+{
+    "user_id": {
+        "order_id": "string",
+        "order_status": "string",
+        "order_currency": "string",
+        "order_products": [
+            {"product_id": "string"}
+        ],
+        "description": "string"
+    }
+}

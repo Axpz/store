@@ -3,9 +3,11 @@
 import { useState } from 'react';
 import * as Form from '@radix-ui/react-form';
 import { useRouter } from 'next/navigation';
+import { useUser } from '../context/UserContext';
 
 export default function SignInForm() {
   const router = useRouter();
+  const { setUser } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -36,9 +38,21 @@ export default function SignInForm() {
         throw new Error(error.error || 'Login failed');
       }
 
+      const result = await response.json();
+      
+      // 保存用户信息
+      const userInfo = {
+        username: result.user.username,
+        id: result.user.id,
+        plan: result.user.plan,
+      };
+      setUser(userInfo);
+      
       // 如果选择了记住我，在前端也设置一个标记
+      data.remember = true; // TODO fix me
       if (data.remember) {
         localStorage.setItem('rememberMe', 'true');
+        localStorage.setItem('user', JSON.stringify(userInfo));
       } else {
         localStorage.removeItem('rememberMe');
       }
@@ -63,7 +77,7 @@ export default function SignInForm() {
       <div>
         <Form.Field name="email">
           <div className="flex items-center justify-between">
-            <Form.Label className="block text-base font-medium text-gray-700 dark:text-gray-300">
+            <Form.Label className="block text-lg font-medium text-gray-700 dark:text-gray-300">
               Email Address
             </Form.Label>
             <Form.Message className="text-sm text-red-600 dark:text-red-400" match="valueMissing">
@@ -87,7 +101,7 @@ export default function SignInForm() {
       <div>
         <Form.Field name="password">
           <div className="flex items-center justify-between">
-            <Form.Label className="block text-base font-medium text-gray-700 dark:text-gray-300">
+            <Form.Label className="block text-lg font-medium text-gray-700 dark:text-gray-300">
               Password
             </Form.Label>
             <Form.Message className="text-sm text-red-600 dark:text-red-400" match="valueMissing">
@@ -130,7 +144,7 @@ export default function SignInForm() {
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-base font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-lg font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? 'Logging in...' : 'Login'}
         </button>

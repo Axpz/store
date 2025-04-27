@@ -96,6 +96,34 @@ func (s *LocalStore) Delete(id string) error {
 	return s.saveUsers()
 }
 
+// CreateOrder 创建新订单
+func (s *LocalStore) CreateOrder(order Order) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	return nil
+}
+
+// GetOrder 获取订单
+func (s *LocalStore) GetOrder(id string) (Order, error) {
+	return Order{}, nil
+}
+
+// GetOrdersByUserID 获取用户订单
+func (s *LocalStore) GetOrdersByUserID(userID string) ([]Order, error) {
+	return nil, nil
+}
+
+// UpdateOrder 更新订单
+func (s *LocalStore) UpdateOrder(order Order) error {
+	return nil
+}
+
+// DeleteOrder 删除订单
+func (s *LocalStore) DeleteOrder(id string) error {
+	return nil
+}
+
 // CreateComment 创建新评论
 func (s *LocalStore) CreateComment(comment Comment) error {
 	s.mu.Lock()

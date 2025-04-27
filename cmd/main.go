@@ -17,11 +17,26 @@ import (
 )
 
 func main() {
+	logger, err := utils.NewLoggerWithoutStacktrace()
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Sync() // 确保日志被刷新
+
 	// 加载配置
 	cfg, err := config.Load("config.yaml")
 	if err != nil {
 		log.Fatalf("加载配置失败: %v", err)
 	}
+	cfg.Logger = logger
+
+	// 设置路由
+	r := gin.Default()
+	r.Use(ginzap.Ginzap(logger, time.RFC3339, true))
+	r.Use(ginzap.RecoveryWithZap(logger, true))
+	r.Use(middleware.LoggerMiddleware(logger))
+	r.Use(middleware.CORS())
+	r.Use(middleware.RateLimit(10, time.Minute))
 
 	// 创建存储实例
 	store, err := storage.New(cfg)
@@ -32,39 +47,12 @@ func main() {
 	// 创建服务和处理器
 	userService := service.NewUserService(store)
 	userHandler := handler.NewUserHandler(userService, cfg.JWT.Secret)
+	userHandler.RegisterRoutes(r)
 
-	logger, err := utils.NewLoggerWithoutStacktrace()
-	if err != nil {
-		panic(err)
-	}
-	defer logger.Sync() // 确保日志被刷新
-
-	// 设置路由
-	r := gin.Default()
-	r.Use(ginzap.Ginzap(logger, time.RFC3339, true))
-	r.Use(ginzap.RecoveryWithZap(logger, true))
-	r.Use(middleware.LoggerMiddleware(logger))
-	r.Use(middleware.CORS())
-	r.Use(middleware.RateLimit(10, time.Minute))
-
-	// 公开路由组
-	public := r.Group("/api")
-	{
-		// 登录注册等公开接口
-		public.POST("/auth/login", userHandler.Login)
-		public.POST("/auth/signup", userHandler.SignUp)
-	}
-
-	// 需要认证的路由组
-	// authorized := r.Group("/api")
-	// authorized.Use(middleware.Auth(cfg.JWT.Secret))
-	{
-		// 用户相关路由
-		public.POST("/users", userHandler.CreateUser)
-		public.GET("/users/:id", userHandler.GetUser)
-		public.PUT("/users/:id", userHandler.UpdateUser)
-		public.DELETE("/users/:id", userHandler.DeleteUser)
-	}
+	// 订单相关路由
+	orderService := service.NewOrderService(store)
+	orderHandler := handler.NewOrderHandler(orderService)
+	orderHandler.RegisterRoutes(r)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Printf("server start at %s", addr)
