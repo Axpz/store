@@ -7,6 +7,7 @@ github:
       path: "tables"
       users: "users.json"
       orders: "orders.json"
+      products: "products.json"
       comments: "comments.json"
 server:
   port: 8080

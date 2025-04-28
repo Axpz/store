@@ -1,10 +1,22 @@
 {
-  "product_id": {
-    "product_id": "string",
-    "product_name": "string",
-    "product_type": "string",
-    "product_description": "string",
-    "price": 1999,
-    "currency": "CNY"
+  "gcp_1001": {
+    "id": "gcp_1001",
+    "name": "Google Cloud Solution Architect",
+    "type": "cloud",
+    "description": "279 past exam questions for Google Cloud Solution Architect exam preparation.",
+    "price": 1,
+    "currency": "USD",
+    "created": 1745671771,
+    "updated": 1745671771
+  },
+  "gcp_1002": {
+    "id": "gcp_1002",
+    "name": "Google AI Solution Architect",
+    "type": "cloud",
+    "description": "279 past exam questions for Google Cloud Solution Architect exam preparation.",
+    "price": 10,
+    "currency": "USD",
+    "created": 1745671771,
+    "updated": 1745671771
   }
 }

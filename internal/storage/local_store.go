@@ -124,6 +124,26 @@ func (s *LocalStore) DeleteOrder(id string) error {
 	return nil
 }
 
+func (s *LocalStore) CreateProduct(product Product) error {
+	return nil
+}
+
+func (s *LocalStore) GetProduct(id string) (Product, error) {
+	return Product{}, nil
+}
+
+func (s *LocalStore) GetProducts() ([]Product, error) {
+	return nil, nil
+}
+
+func (s *LocalStore) UpdateProduct(product Product) error {
+	return nil
+}
+
+func (s *LocalStore) DeleteProduct(id string) error {
+	return nil
+}
+
 // CreateComment 创建新评论
 func (s *LocalStore) CreateComment(comment Comment) error {
 	s.mu.Lock()

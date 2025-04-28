@@ -25,6 +25,13 @@ type StoreInterface interface {
 	UpdateOrder(order Order) error
 	DeleteOrder(id string) error
 
+	// 商品相关操作
+	CreateProduct(product Product) error
+	GetProduct(id string) (Product, error)
+	GetProducts() ([]Product, error)
+	UpdateProduct(product Product) error
+	DeleteProduct(id string) error
+
 	// 评论相关操作
 	CreateComment(comment Comment) error
 	GetComment(id string) (Comment, error)
@@ -46,6 +53,7 @@ type Store struct {
 type Tables struct {
 	users    map[string]User
 	orders   map[string]Order
+	products map[string]Product
 	comments map[string]Comment
 }
 
