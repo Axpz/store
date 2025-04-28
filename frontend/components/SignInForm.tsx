@@ -58,7 +58,7 @@ export default function SignInForm() {
       }
 
       // Redirect to home page after successful signin
-      router.push('/');
+      router.push('/dashboard/orders');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed, please try again');
     } finally {

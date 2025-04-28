@@ -33,6 +33,7 @@ func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
 		auth.POST("/login", h.Login)
 		auth.POST("/logout", h.Logout)
 		auth.POST("/signup", h.SignUp)
+		auth.GET("/verify", h.Verify)
 	}
 
 	// 需要认证的路由组
@@ -190,4 +191,21 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+// Verify 验证用户会话
+func (h *UserHandler) Verify(c *gin.Context) {
+	userID := utils.GetUserIDFromContext(c)
+	if userID == "" {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	user, err := h.userService.GetUser(c, userID)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"user": user})
 }

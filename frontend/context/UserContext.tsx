@@ -13,19 +13,24 @@ interface UserContextType {
   user: User | null;
   setUser: (user: User | null) => void;
   logout: () => Promise<void>;
+  isLoading: boolean;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
+
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // 从localStorage中恢复用户信息
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('user');
+      if (stored) {
+        setUser(JSON.parse(stored));
+      }
+      setIsLoading(false); // 加上 loading 状态管理
     }
   }, []);
 
@@ -43,16 +48,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
         throw new Error('Logout failed');
       }
 
-      // 清除前端状态
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('rememberMe');
-
-      // 重定向到首页
       router.push('/');
     } catch (error) {
       console.error('Logout error:', error);
-      // 即使后端登出失败，也清除前端状态
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('rememberMe');
@@ -61,7 +62,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, setUser, logout }}>
+    <UserContext.Provider value={{ user, setUser, logout, isLoading }}>
       {children}
     </UserContext.Provider>
   );
@@ -73,4 +74,4 @@ export function useUser() {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;
-} 
+}
