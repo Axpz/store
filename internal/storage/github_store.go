@@ -220,9 +220,9 @@ func (s *GitHubStore) loadTable(tableName string, data any) error {
 func (s *GitHubStore) saveTable(tableName string, data any) (err error) {
 	doSave := func() error {
 		// 序列化为 JSON
-		jsonData, e := json.Marshal(data)
+		jsonData, err := json.MarshalIndent(data, "", "  ")
 		if err != nil {
-			return fmt.Errorf("序列化 JSON 失败: %v", e)
+			return fmt.Errorf("序列化 JSON 失败: %v", err)
 		}
 
 		// 获取当前文件的 SHA
