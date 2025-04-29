@@ -9,4 +9,5 @@ type Product struct {
 	Currency    string `json:"currency"`    // 货币类型，比如 CNY
 	Created     int64  `json:"created"`     // 创建时间
 	Updated     int64  `json:"updated"`     // 更新时间
+	Status      string `json:"status"`      // 商品状态
 }

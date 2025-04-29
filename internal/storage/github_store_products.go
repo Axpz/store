@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"sort"
 )
 
 // Create 创建新
@@ -56,6 +57,11 @@ func (s *GitHubStore) GetProducts() ([]Product, error) {
 	for _, product := range s.products {
 		products = append(products, product)
 	}
+
+	sort.Slice(products, func(i, j int) bool {
+		return products[i].Name < products[j].Name
+	})
+
 	return products, nil
 }
 

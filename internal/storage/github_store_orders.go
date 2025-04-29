@@ -2,6 +2,7 @@ package storage
 
 import (
 	"fmt"
+	"sort"
 
 	"go.uber.org/zap"
 )
@@ -64,6 +65,10 @@ func (s *GitHubStore) GetOrdersByUserID(userID string) ([]Order, error) {
 			result = append(result, order)
 		}
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].Updated > result[j].Updated
+	})
 
 	return result, nil
 }
