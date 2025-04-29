@@ -3,9 +3,8 @@
 import { useAuth } from '@/context/UserContext';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
-import { useEffect, useState } from 'react';
 
-export default function UsersPage() {
+  export default function AnalyticsPage() {
   const { user, isLoading } = useAuth();
 
   return (
@@ -17,7 +16,7 @@ export default function UsersPage() {
           
           {/* Main Content */}
           <div className="flex-1 bg-white dark:bg-gray-800 shadow-lg rounded-lg p-8">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">User Management</h2>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-4">Analytics</h2>
             {/* User management content will go here */}
           </div>
         </div>

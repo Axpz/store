@@ -24,25 +24,30 @@ func Auth(jwtSecret string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 获取token
 		token := c.GetHeader(TokenHeader)
-		if token == "" {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "未提供访问令牌",
-			})
-			c.Abort()
-			return
-		}
+		if token != "" {
+			// 检查token格式
+			if !strings.HasPrefix(token, TokenPrefix) {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": "访问令牌格式错误",
+				})
+				c.Abort()
+				return
+			}
 
-		// 检查token格式
-		if !strings.HasPrefix(token, TokenPrefix) {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"error": "访问令牌格式错误",
-			})
-			c.Abort()
-			return
+			// 提取token
+			token = strings.TrimPrefix(token, TokenPrefix)
+		} else {
+			// 检查cookie
+			cookieToken, err := c.Cookie("token")
+			if err != nil || cookieToken == "" {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": "未提供访问令牌",
+				})
+				c.Abort()
+				return
+			}
+			token = cookieToken
 		}
-
-		// 提取token
-		token = strings.TrimPrefix(token, TokenPrefix)
 
 		// 验证token
 		claims, err := jwt.ValidateToken(token, jwtSecret)

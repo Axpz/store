@@ -1,6 +1,10 @@
 package storage
 
-import "fmt"
+import (
+	"fmt"
+
+	"go.uber.org/zap"
+)
 
 // Create 创建新用户
 func (s *GitHubStore) CreateOrder(order Order) error {
@@ -46,6 +50,9 @@ func (s *GitHubStore) GetOrdersByUserID(userID string) ([]Order, error) {
 	defer s.mu.RUnlock()
 
 	var result []Order
+
+	logger := s.Logger()
+	logger.Info("GetOrdersByUserID", zap.String("userID", userID))
 
 	// 确保用户表已加载
 	if err := s.loadOrders(); err != nil {

@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 
 interface User {
   id: string;
@@ -19,8 +19,6 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: ReactNode }) {
-  const router = useRouter();
-
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -51,13 +49,13 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('rememberMe');
-      router.push('/');
+      redirect('/');
     } catch (error) {
       console.error('Logout error:', error);
       setUser(null);
       localStorage.removeItem('user');
       localStorage.removeItem('rememberMe');
-      router.push('/');
+      redirect('/');
     }
   };
 
@@ -74,4 +72,25 @@ export function useUser() {
     throw new Error('useUser must be used within a UserProvider');
   }
   return context;
+}
+
+export function useAuth() {
+  const { user, isLoading } = useUser();
+
+  useEffect(() => {
+    console.log("User state (from useAuth):", { user, isLoading });
+    if (!isLoading && !user) {
+      console.log("User not logged in, redirecting to /login");
+      redirect('/login');
+    } else if (!isLoading && user) {
+      console.log("User details (from useAuth):", {
+        id: user.id,
+        username: user.username,
+        plan: user.plan
+      });
+      // 这里可以放置一些登录后的通用逻辑，如果需要的话
+    }
+  }, [user, isLoading]);
+
+  return { user, isLoading }; // Hook 可以返回一些有用的状态
 }

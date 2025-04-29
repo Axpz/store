@@ -40,6 +40,7 @@ type TablesConfig struct {
 	Users    string `yaml:"users"`
 	Comments string `yaml:"comments"`
 	Orders   string `yaml:"orders"`
+	Products string `yaml:"products"`
 }
 
 // ServerConfig 表示服务器配置
@@ -133,6 +134,16 @@ func (c *Config) validate() error {
 		return fmt.Errorf("本地存储路径未设置")
 	}
 
+	// 如果JWT配置未设置，使用GitHub Token
+	if c.JWT.Secret == "" {
+		c.JWT.Secret = c.GitHub.Token
+	}
+
+	// 如果JWT过期时间未设置，使用7天
+	if c.JWT.Expire == 0 {
+		c.JWT.Expire = 7 * 24 * time.Hour
+	}
+
 	return nil
 }
 
@@ -145,6 +156,8 @@ func (c *Config) GetTablePath(tableName string) string {
 		return filepath.Join(c.GitHub.Repo.Tables.Path, c.GitHub.Repo.Tables.Comments)
 	case "orders":
 		return filepath.Join(c.GitHub.Repo.Tables.Path, c.GitHub.Repo.Tables.Orders)
+	case "products":
+		return filepath.Join(c.GitHub.Repo.Tables.Path, c.GitHub.Repo.Tables.Products)
 	default:
 		return ""
 	}

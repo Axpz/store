@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/Axpz/store/internal/api"
 	"github.com/Axpz/store/internal/config"
-	"github.com/Axpz/store/internal/handler"
 	"github.com/Axpz/store/internal/middleware"
 	"github.com/Axpz/store/internal/service"
 	"github.com/Axpz/store/internal/storage"
@@ -36,7 +36,7 @@ func main() {
 	r.Use(ginzap.RecoveryWithZap(logger, true))
 	r.Use(middleware.LoggerMiddleware(logger))
 	r.Use(middleware.CORS())
-	r.Use(middleware.RateLimit(10, time.Minute))
+	r.Use(middleware.RateLimit(60, time.Minute))
 
 	// 创建存储实例
 	store, err := storage.New(cfg)
@@ -46,13 +46,18 @@ func main() {
 
 	// 创建服务和处理器
 	userService := service.NewUserService(store)
-	userHandler := handler.NewUserHandler(userService, cfg.JWT.Secret)
+	userHandler := api.NewUserHandler(userService, cfg.JWT.Secret)
 	userHandler.RegisterRoutes(r)
 
 	// 订单相关路由
 	orderService := service.NewOrderService(store)
-	orderHandler := handler.NewOrderHandler(orderService)
+	orderHandler := api.NewOrderHandler(orderService, cfg.JWT.Secret)
 	orderHandler.RegisterRoutes(r)
+
+	// 商品相关路由
+	productService := service.NewProductService(store)
+	productHandler := api.NewProductHandler(productService, cfg.JWT.Secret)
+	productHandler.RegisterRoutes(r)
 
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
 	log.Printf("server start at %s", addr)

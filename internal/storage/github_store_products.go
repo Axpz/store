@@ -47,6 +47,11 @@ func (s *GitHubStore) GetProducts() ([]Product, error) {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
+	// 确保用户表已加载
+	if err := s.loadProducts(); err != nil {
+		return nil, err
+	}
+
 	var products []Product
 	for _, product := range s.products {
 		products = append(products, product)

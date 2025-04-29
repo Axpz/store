@@ -1,20 +1,28 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import { useUser } from '@/context/UserContext';
 import Header from '@/components/Header';
 import Sidebar from '@/components/Sidebar';
 import { useEffect } from 'react';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const { user } = useUser();
+  const { user, isLoading } = useUser();
 
   useEffect(() => {
-    if (!user) {
-      router.push('/login');
+    console.log("User state:", { user, isLoading });
+    if (!isLoading && !user) {
+      redirect('/login');
+    } else if (!isLoading && user) {
+      console.log("User details:", {
+        id: user.id,
+        username: user.username,
+        plan: user.plan
+
+      });
+      // fetchOrders();
     }
-  }, [user, router]);
+  }, [user, isLoading]);
 
   if (!user) {
     return null;
@@ -23,7 +31,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header />
-      <div className="min-h-screen flex flex-col items-center justify-center text-center max-w-7xl mx-auto">
+      <div className="min-h-screen flex flex-col items-center justify-start text-center max-w-7xl mx-auto">
         <div className="flex w-full">
           <Sidebar className="mr-4" />
           

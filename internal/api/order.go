@@ -1,27 +1,32 @@
-package handler
+package api
 
 import (
 	"net/http"
 	"strconv"
 
+	"github.com/Axpz/store/internal/middleware"
 	"github.com/Axpz/store/internal/service"
 	"github.com/Axpz/store/internal/types"
 	"github.com/Axpz/store/internal/utils"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type OrderHandler struct {
 	orderService *service.OrderService
+	jwtSecret    string
 }
 
-func NewOrderHandler(orderService *service.OrderService) *OrderHandler {
+func NewOrderHandler(orderService *service.OrderService, jwtSecret string) *OrderHandler {
 	return &OrderHandler{
 		orderService: orderService,
+		jwtSecret:    jwtSecret,
 	}
 }
 
 func (h *OrderHandler) RegisterRoutes(router *gin.Engine) {
 	orders := router.Group("/api/orders")
+	orders.Use(middleware.Auth(h.jwtSecret))
 	{
 		orders.POST("", h.CreateOrder)
 		orders.GET("", h.GetOrders)
@@ -77,8 +82,12 @@ func (h *OrderHandler) GetOrder(c *gin.Context) {
 }
 
 func (h *OrderHandler) GetOrders(c *gin.Context) {
+	logger := utils.LoggerFromContext(c.Request.Context())
+
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	pageSize, _ := strconv.Atoi(c.DefaultQuery("page_size", "100"))
+
+	logger.Info("GetOrders", zap.Int("page", page), zap.Int("pageSize", pageSize))
 
 	orders, total, err := h.orderService.GetOrders(c, page, pageSize)
 	if err != nil {
