@@ -1,22 +1,24 @@
 {
   "gcp_1001": {
     "id": "gcp_1001",
-    "name": "Google Cloud Solution Architect",
+    "name": "Professional Cloud Architect Actual Exam Questions 279",
     "type": "cloud",
-    "description": "279 past exam questions for Google Cloud Solution Architect exam preparation.",
+    "image": "gcp_01.png",
+    "description": "Exam Name: Professional Cloud Architect on Google Cloud Platform\nExam Code: GCP_1001",
     "price": 1,
     "currency": "USD",
-    "created": 1745671771,
-    "updated": 1745671771
+    "created": 1745899200,
+    "updated": 1745899200
   },
   "gcp_1002": {
     "id": "gcp_1002",
-    "name": "Google AI Solution Architect",
+    "name": "Google AI Solution Architect Actual Exam Questions 279",
     "type": "cloud",
-    "description": "279 past exam questions for Google Cloud Solution Architect exam preparation.",
+    "image": "gcp_01.png", 
+    "description": "Currently not available",
     "price": 10,
     "currency": "USD",
-    "created": 1745671771,
-    "updated": 1745671771
+    "created": 1745899200,
+    "updated": 1745899200
   }
 }
