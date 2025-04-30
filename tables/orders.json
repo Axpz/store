@@ -40,7 +40,7 @@
   "4VN93884MW3916537": {
     "id": "4VN93884MW3916537",
     "user_id": "tkK0IXs0sejTvZFfxlxEUg",
-    "status": "pending",
+    "status": "completed",
     "currency": "USD",
     "products": [
       {
@@ -54,7 +54,7 @@
     "paid_amount": 0,
     "description": "paypal order",
     "created": 1746026950,
-    "updated": 1746026950
+    "updated": 1746026960
   },
   "5GL418174T279270W": {
     "id": "5GL418174T279270W",
