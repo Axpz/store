@@ -78,7 +78,7 @@
   "67C56894PG786214N": {
     "id": "67C56894PG786214N",
     "user_id": "tkK0IXs0sejTvZFfxlxEUg",
-    "status": "pending",
+    "status": "completed",
     "currency": "USD",
     "products": [
       {
@@ -92,7 +92,7 @@
     "paid_amount": 0,
     "description": "paypal order",
     "created": 1746026788,
-    "updated": 1746026788
+    "updated": 1746026802
   },
   "70D669320Y7594416": {
     "id": "70D669320Y7594416",
