@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Product } from '@/lib/api'; // 确保导入你的 Product 类型
+import { Order, Product } from '@/lib/api'; // 确保导入你的 Product 类型
 
 interface ProductState {
   selectedProduct: Product | null;
@@ -9,4 +9,23 @@ interface ProductState {
 export const useProductStore = create<ProductState>()((set) => ({
   selectedProduct: null,
   setSelectedProduct: (product) => set({ selectedProduct: product }),
+}));
+
+
+interface OrderState {
+  ordersArray: Order[];
+  ordersMap: Map<string, Order>;
+  setOrders: (orders: Order[]) => void;
+  getOrderById: (id: string) => Order | undefined;
+}
+
+export const useOrderStore = create<OrderState>()((set, get) => ({
+  ordersArray: [],
+  ordersMap: new Map(),
+  setOrders: (orders) => {
+    const newOrdersMap = new Map();
+    orders.forEach((order) => newOrdersMap.set(order.id, order));
+    set({ ordersArray: orders, ordersMap: newOrdersMap });
+  },
+  getOrderById: (id) => get().ordersMap.get(id),
 }));

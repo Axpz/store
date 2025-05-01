@@ -82,6 +82,15 @@ func (s *OrderService) GetOrder(c *gin.Context, id string) (*types.Order, error)
 		return nil, fmt.Errorf("order is not owned by current user")
 	}
 
+	for i := range order.Products {
+		p, err := s.store.GetProduct(order.Products[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		order.Products[i].Content = p.Content
+		order.Products[i].Name = p.Name
+	}
+
 	return &order, nil
 }
 

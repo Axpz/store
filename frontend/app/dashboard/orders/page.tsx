@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { log } from "console";
 import { toast } from "react-toastify";
 import { Order, OrdersResponse } from "@/lib/api";
+import { useOrderStore } from "@/app/store/productStore";
 
 // // 模拟订单数据
 // const ordersData: Order[] = [
@@ -76,7 +77,8 @@ import { Order, OrdersResponse } from "@/lib/api";
 
 export default function OrdersPage() {
   const { user, isLoading } = useAuth();
-  const [orders, setOrders] = useState<Order[]>([]);
+
+  const { ordersArray, setOrders } = useOrderStore();
 
   const fetchOrders = async () => {
     try {
@@ -112,8 +114,8 @@ export default function OrdersPage() {
 
         {/* Order management content will go here */}
         <div className="container mx-auto py-8">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {orders.map((order) => (
+          <div className="grid gap-4 grid-cols-auto-fit">
+            {ordersArray.map((order) => (
               <OrderItem key={order.id} order={order} />
             ))}
           </div>

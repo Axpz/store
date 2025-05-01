@@ -37,6 +37,7 @@ export interface Product {
     name: string;
     quantity: number;
     price: number;
+    content: string[];
   }
   
   export interface OrderRequest {

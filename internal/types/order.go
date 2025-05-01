@@ -4,10 +4,11 @@ import "time"
 
 // OrderProduct 代表一个订单中的商品
 type OrderProduct struct {
-	ID          string `json:"id"`       // 商品ID
-	ProductName string `json:"name"`     // 商品名称
-	Quantity    int    `json:"quantity"` // 商品数量
-	Price       int64  `json:"price"`    // 商品单价，单位分
+	ID       string   `json:"id"`       // 商品ID
+	Name     string   `json:"name"`     // 商品名称
+	Quantity int      `json:"quantity"` // 商品数量
+	Price    int64    `json:"price"`    // 商品单价，单位分
+	Content  []string `json:"content"`  // 商品内容
 }
 
 // Order 代表订单信息

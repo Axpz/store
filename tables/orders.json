@@ -7,7 +7,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -26,7 +25,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -45,7 +43,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -64,7 +61,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -83,7 +79,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -102,7 +97,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -121,7 +115,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -140,7 +133,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -159,7 +151,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -178,7 +169,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
@@ -197,19 +187,16 @@
     "products": [
       {
         "id": "P004",
-        "name": "商品 D",
         "quantity": 0,
         "price": 0
       },
       {
         "id": "P005",
-        "name": "商品 E",
         "quantity": 0,
         "price": 0
       },
       {
         "id": "P006",
-        "name": "商品 F",
         "quantity": 0,
         "price": 0
       }
@@ -228,13 +215,11 @@
     "products": [
       {
         "id": "P001",
-        "name": "商品 A",
         "quantity": 0,
         "price": 0
       },
       {
         "id": "P002",
-        "name": "商品 B",
         "quantity": 0,
         "price": 0
       }
@@ -253,7 +238,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Google Cloud Solution Architect",
         "quantity": 0,
         "price": 0
       }
@@ -272,13 +256,11 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Google Cloud Solution Architect",
         "quantity": 0,
         "price": 0
       },
       {
         "id": "gcp_1002",
-        "name": "Google AI Solution Architect",
         "quantity": 0,
         "price": 0
       }
@@ -297,7 +279,6 @@
     "products": [
       {
         "id": "P003",
-        "name": "商品 C",
         "quantity": 0,
         "price": 0
       }
@@ -316,7 +297,6 @@
     "products": [
       {
         "id": "gcp_1001",
-        "name": "Professional Cloud Architect Actual Exam Questions 279",
         "quantity": 1,
         "price": 100
       }
