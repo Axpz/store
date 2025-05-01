@@ -6,9 +6,10 @@ export interface Product {
     description: string;
     price: number; // 转换成 number 类型
     currency: string;
+    status: string; // 状态
+    content: string[]; // 内容
     created: number; // 转换成 number 类型
     updated: number; // 转换成 number 类型
-    status: string; // 状态
   }
   
   export interface ProductsResponse {
