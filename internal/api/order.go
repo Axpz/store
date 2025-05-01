@@ -29,6 +29,7 @@ func (h *OrderHandler) RegisterRoutes(router *gin.Engine) {
 	orders.Use(middleware.Auth(h.jwtSecret))
 	{
 		orders.POST("", h.CreateOrder)
+		orders.POST("/:id/capture", h.CaptureOrder)
 		orders.GET("", h.GetOrders)
 		orders.GET("/:id", h.GetOrder)
 		orders.PUT("/:id", h.UpdateOrder)
@@ -42,6 +43,9 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
+
+	logger := utils.LoggerFromContext(c.Request.Context())
+	logger.Info("CreateOrder", zap.Any("req", req))
 
 	order := types.Order{
 		Currency:    req.Currency,
@@ -63,6 +67,21 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, dbOrder)
+}
+
+func (h *OrderHandler) CaptureOrder(c *gin.Context) {
+	orderID := c.Param("id")
+	if orderID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "order id is required"})
+		return
+	}
+
+	if err := h.orderService.CaptureOrder(c, orderID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }
 
 func (h *OrderHandler) GetOrder(c *gin.Context) {

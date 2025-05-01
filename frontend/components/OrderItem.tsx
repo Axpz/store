@@ -3,9 +3,8 @@ import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Label } from '@radix-ui/react-label';
 import { Separator } from '@radix-ui/react-separator';
 import { DotFilledIcon } from '@radix-ui/react-icons';
-import { format } from 'date-fns';
-import { OrderProduct, Order } from '@/app/dashboard/orders/page';
-
+import { Order } from '@/lib/api';
+import { formatPrice, formatDate } from '@/lib/utils'; 
 
 // const statusColors: { [key: string]: string } = {
 //   pending: 'bg-yellow-100 text-yellow-700',
@@ -20,20 +19,13 @@ interface OrderItemProps {
 }
 
 const statusColors: { [key: string]: string } = {
-  paid: 'bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300',
+  completed: 'bg-green-200 text-green-800 dark:bg-green-700 dark:text-green-300 font-semibold', // 更强调完成，略微加深背景和文本，加粗
+  paid: 'bg-green-100 text-green-700 dark:bg-green-800 dark:text-green-300', // 基础的成功颜色
   pending: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-800 dark:text-yellow-300',
   shipped: 'bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300',
   cancelled: 'bg-red-100 text-red-700 dark:bg-red-800 dark:text-red-300',
 };
 
-const formatAmount = (amount: number): string => {
-  return amount.toLocaleString(); // 简单的金额格式化
-};
-
-const formatDate = (timestamp: number): string => {
-  const date = new Date(timestamp * 1000); // 将秒转换为毫秒
-  return format(date, 'yyyy-MM-dd HH:mm');
-};
 
 const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
   return (
@@ -50,23 +42,29 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
           <Label className="text-sm text-gray-500">商品:</Label>
           <p className="text-sm">{order.products.map(p => p.name).join(', ')} {order.products.length > 2 ? '...' : ''}</p>
         </div>
+        <Separator className="my-2 bg-gray-200" />
         <div>
           <Label className="text-sm text-gray-500">总金额:</Label>
-          <p className="text-sm font-medium">{order.currency} {formatAmount(order.total_amount)}</p>
+          <p className="text-sm font-medium">{formatPrice(order.total_amount, order.currency)}</p>
         </div>
+        <Separator className="my-2 bg-gray-200" />
         <div>
           <Label className="text-sm text-gray-500">创建时间:</Label>
           <p className="text-sm">{formatDate(order.created)}</p>
+        </div>
+        <div>
+          <Label className="text-sm text-gray-500">更新时间:</Label>
+          <p className="text-sm">{formatDate(order.updated)}</p>
         </div>
         <Separator className="my-2 bg-gray-200" />
         {/* 查看详情按钮保持在 CardContent 中 */}
       </CardContent>
       {/* 将按钮放在 CardContent 外部，并利用 justify-between 推到底部 */}
-      <div className="mt-auto">
+      {/* <div className="mt-auto">
         <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded text-sm w-full">
           查看详情
         </button>
-      </div>
+      </div> */}
     </Card>
   );
 };

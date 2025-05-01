@@ -12,7 +12,7 @@ type OrderProduct struct {
 
 // Order 代表订单信息
 type Order struct {
-	ID          string         `json:"id"`           // 订单ID
+	ID          string         `json:"id"`           // 订单ID，也是 PayPal 的订单ID
 	UserID      string         `json:"user_id"`      // 用户ID
 	Status      string         `json:"status"`       // 订单状态
 	Currency    string         `json:"currency"`     // 货币类型

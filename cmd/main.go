@@ -44,13 +44,19 @@ func main() {
 		log.Fatalf("创建存储失败: %v", err)
 	}
 
+	// 创建支付提供者
+	paypalProvider, err := service.NewPayPalProvider()
+	if err != nil {
+		logger.Fatal("创建PayPal提供者失败", zap.Error(err))
+	}
+
 	// 创建服务和处理器
 	userService := service.NewUserService(store)
 	userHandler := api.NewUserHandler(userService, cfg.JWT.Secret)
 	userHandler.RegisterRoutes(r)
 
 	// 订单相关路由
-	orderService := service.NewOrderService(store)
+	orderService := service.NewOrderService(store, paypalProvider)
 	orderHandler := api.NewOrderHandler(orderService, cfg.JWT.Secret)
 	orderHandler.RegisterRoutes(r)
 

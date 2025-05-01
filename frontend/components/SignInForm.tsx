@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import * as Form from '@radix-ui/react-form';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '../context/UserContext';
 
 export default function SignInForm() {
@@ -10,6 +10,8 @@ export default function SignInForm() {
   const { setUser } = useUser();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get('callbackUrl') || '/dashboard/orders'; // 获取 callbackUrl，默认为首页
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -58,7 +60,7 @@ export default function SignInForm() {
       }
 
       // Redirect to home page after successful signin
-      router.push('/dashboard/orders');
+      router.push(callbackUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed, please try again');
     } finally {

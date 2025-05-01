@@ -4,6 +4,7 @@ type Product struct {
 	ID          string `json:"id"`          // 商品ID
 	Name        string `json:"name"`        // 商品名称
 	Type        string `json:"type"`        // 商品类型
+	Image       string `json:"image"`       // 商品图片
 	Description string `json:"description"` // 商品描述
 	Price       int64  `json:"price"`       // 商品价格（单位分，比如1999表示¥19.99）
 	Currency    string `json:"currency"`    // 货币类型，比如 CNY

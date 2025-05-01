@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { redirect } from 'next/navigation';
+import { redirect, usePathname, useRouter } from 'next/navigation';
 
 interface User {
   id: string;
@@ -74,14 +74,17 @@ export function useUser() {
   return context;
 }
 
-export function useAuth() {
+export function useAuth({ redirectTo = '/login', shouldRedirect = true } = {}) {
   const { user, isLoading } = useUser();
+  const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     console.log("User state (from useAuth):", { user, isLoading });
-    if (!isLoading && !user) {
-      console.log("User not logged in, redirecting to /login");
-      redirect('/login');
+
+    if (!isLoading && !user && shouldRedirect && pathname !== redirectTo) {
+      console.log("User not logged in, redirecting to login with callback:", pathname);
+      router.push(`${redirectTo}?callbackUrl=${encodeURIComponent(pathname)}`);
     } else if (!isLoading && user) {
       console.log("User details (from useAuth):", {
         id: user.id,
@@ -90,7 +93,7 @@ export function useAuth() {
       });
       // 这里可以放置一些登录后的通用逻辑，如果需要的话
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, router, pathname, redirectTo, shouldRedirect]);
 
   return { user, isLoading }; // Hook 可以返回一些有用的状态
 }

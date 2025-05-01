@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/Axpz/store/internal/middleware"
 	"github.com/Axpz/store/internal/service"
 	"github.com/Axpz/store/internal/utils"
 	"github.com/gin-gonic/gin"
@@ -25,7 +24,7 @@ func NewProductHandler(productService *service.ProductService, jwtSecret string)
 
 func (h *ProductHandler) RegisterRoutes(router *gin.Engine) {
 	products := router.Group("/api/products")
-	products.Use(middleware.Auth(h.jwtSecret))
+	// products.Use(middleware.Auth(h.jwtSecret))
 	{
 		// products.POST("", h.CreateProduct)
 		products.GET("", h.GetProducts)

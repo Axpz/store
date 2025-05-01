@@ -8,33 +8,7 @@ import OrderItem from "@/components/OrderItem";
 import { useEffect, useState } from "react";
 import { log } from "console";
 import { toast } from "react-toastify";
-
-export interface OrderProduct {
-  id: string;
-  name: string;
-  quantity: number;
-  price: number;
-}
-
-export interface Order {
-  id: string;
-  user_id: string;
-  status: string;
-  currency: string;
-  products: OrderProduct[];
-  total_amount: number;
-  paid_amount: number;
-  description: string;
-  created: number;
-  updated: number;
-}
-
-export interface OrdersResponse {
-  data: Order[];
-  page: number;
-  size: number;
-  total: number;
-}
+import { Order, OrdersResponse } from "@/lib/api";
 
 // // 模拟订单数据
 // const ordersData: Order[] = [
