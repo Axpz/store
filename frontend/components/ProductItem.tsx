@@ -15,22 +15,24 @@ import { useRouter } from "next/navigation";
 import { useProductStore } from "@/app/store/productStore";
 import PayPalButton from "./paypal-button";
 import { formatPrice, formatDate } from "@/lib/utils";
+import {
+  ArrowRightIcon,
+  ArrowDownIcon,
+} from "@radix-ui/react-icons";
+import { Button } from "@/components/ui/button";
 
 export interface ProductItemProps {
   product: Product;
-  full?: boolean;
   checkout?: boolean;
 }
 
-
 const ProductItem: React.FC<ProductItemProps> = ({
   product,
-  full = false,
   checkout = false,
 }) => {
   const router = useRouter();
   const { setSelectedProduct } = useProductStore();
-  const [showPayPalButtons, setShowPayPalButtons] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   const handleCardClick = () => {
     if (!checkout) {
@@ -41,6 +43,11 @@ const ProductItem: React.FC<ProductItemProps> = ({
 
   const handleCheckoutClick = () => {
     router.push(`/products/${product.id}/checkout`);
+  };
+
+  const toggleExpand = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setIsExpanded(!isExpanded);
   };
 
   return (
@@ -67,9 +74,21 @@ const ProductItem: React.FC<ProductItemProps> = ({
           </p>
         </div>
       </CardHeader>
-      {full && (
-        <>
-          <CardContent className="p-6 grid gap-2 mt-2">
+      <CardContent className="p-6 grid gap-2 mt-2">
+        <Button
+          variant="ghost"
+          onClick={toggleExpand}
+          className="inline-flex items-center justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-48 mt-2"
+        >
+          {isExpanded ? (
+            <ArrowDownIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+          ) : (
+            <ArrowRightIcon className="mr-2 h-4 w-4" aria-hidden="true" />
+          )}
+        </Button>
+
+        {isExpanded && (
+          <div className="mt-2 grid gap-2">
             <div>
               <Label className="text-sm text-gray-500">描述:</Label>
               <p className="text-sm">{product.description}</p>
@@ -83,10 +102,9 @@ const ProductItem: React.FC<ProductItemProps> = ({
               <Label className="text-sm text-gray-500">更新时间:</Label>
               <p className="text-sm">{formatDate(product.updated)}</p>
             </div>
-            <Separator className="my-2 bg-gray-200" />
-          </CardContent>
-        </>
-      )}
+          </div>
+        )}
+      </CardContent>
       <CardFooter className="flex justify-center items-center">
         {checkout && 
           <div className="w-full">

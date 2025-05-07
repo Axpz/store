@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { PayPalButtons } from '@paypal/react-paypal-js';
+import { PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js';
 import { toast } from 'react-toastify';
 import { OrderRequest, Product, OrdersResponse } from '@/lib/api';
 
@@ -13,24 +13,24 @@ interface PayPalButtonProps {
   onError?: (error: any) => void;
 }
 
-const formatPrice = (price: number, currency: string): string => {
-  return new Intl.NumberFormat(undefined, {
-    style: 'currency',
-    currency: currency,
-  }).format(price / 100);
-};
-
 const PayPalButtonComponent: React.FC<PayPalButtonProps> = ({ product, onSuccess, onError }) => {
+  const [{ isPending }] = usePayPalScriptReducer();
+  
   const handleCreateOrder = (data: any, actions: any) => {
     console.log('handleCreateOrder - data:', data);
     console.log('handleCreateOrder - actions:', actions);
 
     const orderReq: OrderRequest = {
       currency: product.currency as 'CNY' | 'USD',
-      products: [{ id: product.id, name: product.name, quantity: 1, price: product.price }],
-      total_amount: product.price,
-      description: 'paypal order',
-    };  
+      products: [{ 
+        id: product.id, 
+        name: product.name, 
+        quantity: 1, 
+        price: product.price,
+        content: product.content
+      }],
+      total_amount: product.price
+    };
   
     return fetch('http://localhost:8080/api/orders', {
       method: 'POST',
@@ -93,17 +93,20 @@ const PayPalButtonComponent: React.FC<PayPalButtonProps> = ({ product, onSuccess
   };
 
   return (
-    <PayPalButtons
-      createOrder={handleCreateOrder}
-      onApprove={handleApprove}
-      onError={handleError}
-      style={{
-        layout: 'vertical',
-        color: 'blue',
-        shape: 'rect',
-        label: 'pay',
-      }}
-    />
+    <div>
+      {isPending && <p>Loading...</p>}
+      <PayPalButtons
+        createOrder={handleCreateOrder}
+        onApprove={handleApprove}
+        onError={handleError}
+        style={{
+          layout: 'vertical',
+          color: 'blue',
+          shape: 'rect',
+          label: 'pay',
+        }}
+      />
+    </div>
   );
 };
 

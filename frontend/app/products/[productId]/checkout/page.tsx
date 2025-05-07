@@ -2,17 +2,26 @@
 
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { toast } from "react-toastify";
 import PayPalButton from "@/components/paypal-button";
 import { Product } from "@/lib/api";
 import { useProductStore } from "@/app/store/productStore";
+import { useAuth } from "@/context/UserContext";
 
-export default function CheckoutPage({
-  params,
-}: {
-  params: { productId: string };
-}) {
+export default function CheckoutPage() {
+  const { user, isLoading } = useAuth();
+
+  if (isLoading) {
+    toast.error("Loading...");
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    // toast.error("Please login");
+    return <div>Please login</div>;
+  }
+
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -24,41 +33,21 @@ export default function CheckoutPage({
 
   const product = selectedProduct;
 
-  // useEffect(() => {
-  //   const fetchProduct = async () => {
-  //     try {
-  //       const response = await fetch(`/api/products/${params.productId}`);
-  //       if (!response.ok) {
-  //         throw new Error('Failed to fetch product');
-  //       }
-  //       const data = await response.json();
-  //       setProduct(data);
-  //     } catch (error) {
-  //       toast.error('获取商品信息失败');
-  //       router.push('/products');
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchProduct();
-  // }, [params.productId, router]);
-
   const handlePaymentSuccess = () => {
-    toast.success("支付成功！");
+    toast.success("Payment successful!");
     router.push("/dashboard/orders");
   };
 
   const handlePaymentError = (error: any) => {
-    console.error("支付错误：", error);
+    console.error("Payment error:", error);
   };
 
   if (loading) {
-    return <div>加载中...</div>;
+    return <div>Loading...</div>;
   }
 
   if (!product) {
-    return <div>商品不存在</div>;
+    return <div>Product not found</div>;
   }
 
   return (

@@ -47,6 +47,7 @@ export default function SignInForm() {
         username: result.user.username,
         id: result.user.id,
         plan: result.user.plan,
+        email: result.user.email,
       };
       setUser(userInfo);
       

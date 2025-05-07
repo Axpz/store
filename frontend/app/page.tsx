@@ -6,13 +6,13 @@ import { useEffect } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
 import { ProductsResponse } from "@/lib/api";
-import { getProducts } from "./dashboard/products/page";
+import { fetchAndStoreProducts } from "@/lib/api";
 
 
 export default function Home() {
   const { data: productsResponse, error, isLoading: fetchIsLoading } = useSWR<ProductsResponse, Error>(
-    'http://localhost:8080/api/products', // 只有在用户登录后才请求数据
-    getProducts, // 直接使用导入的 getProducts 函数作为 fetcher
+    'http://localhost:8080/api/products',
+    fetchAndStoreProducts,
     {
       revalidateOnFocus: false,
     }
@@ -21,7 +21,7 @@ export default function Home() {
   useEffect(() => {
     if (error) {
       console.error("Error fetching products:", error);
-      toast.error(`获取商品失败: ${error.message}`);
+      toast.error(`Error fetching products: ${error.message}`);
     }
   }, [error]);
 

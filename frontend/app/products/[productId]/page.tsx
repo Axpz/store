@@ -31,7 +31,7 @@ export default function ProductsPage() {
         <div className="w-full py-8">
           {/* Using full width for the product item */}
           <div className="w-full">
-            <ProductItem key={product.id} product={product} full={true} checkout={true} />
+            <ProductItem key={product.id} product={product} checkout={true} />
           </div>
         </div>
   

@@ -1,54 +1,112 @@
-# Go parameters
-GOCMD=go
-GOBUILD=$(GOCMD) build
-GORUN=$(GOCMD) run
-GOCLEAN=$(GOCMD) clean
-GOTEST=$(GOCMD) test
-GOGET=$(GOCMD) get
-BINARY_NAME=store
-BINARY_UNIX=$(BINARY_NAME)_unix
+# --- Go parameters ---
+GOCMD = go
+GOBUILD = $(GOCMD) build
+GORUN = $(GOCMD) run
+GOCLEAN = $(GOCMD) clean
+GOTEST = $(GOCMD) test
+GOGET = $(GOCMD) get
 
-# Build flags
-LDFLAGS=-ldflags "-s -w"
+BINARY_NAME = store
+BINARY_OUT = $(BINARY_NAME)
+BINARY_LINUX = $(BINARY_NAME)_linux
+LDFLAGS = -ldflags="-s -w"
 
-.PHONY: all build run tidy test clean get-deps
+# --- Build environment ---
+BUILD_ENV ?= dev
 
-all: test build
+# --- Git commit ---
+GIT_COMMIT := $(shell git rev-parse --short HEAD)
+
+# --- Frontend ---
+FRONTEND_DIR = frontend
+NPM_CMD = pnpm
+
+# --- Docker ---
+IMAGE_NAME = store-app
+DOCKER_TAG ?= $(if $(filter $(BUILD_ENV),dev),dev-$(GIT_COMMIT),$(GIT_COMMIT))
+DOCKERFILE = Dockerfile
+
+.PHONY: all build dev prod run tidy test clean get-deps \
+        frontend-install frontend-build frontend-clean \
+        build-all run-all build-backend \
+        docker-build docker-buildx docker-push \
+        test-coverage test-race test-bench
+
+# --- Main targets ---
+
+all: test build-all
 
 build:
-	$(GOBUILD) $(LDFLAGS) -o $(BINARY_NAME) ./cmd/
+	@echo "🚀 Building in production mode..."
+	$(MAKE) build-all BUILD_ENV=dev
+	$(MAKE) docker-build BUILD_ENV=dev
+
+## Production build
+buildprod:
+	@echo "🚀 Building in production mode..."
+	$(MAKE) build-all BUILD_ENV=production NODE_ENV=production
+	$(MAKE) docker-build BUILD_ENV=production
+
+# --- Build backend + frontend ---
+build-all: frontend-install frontend-build build-backend
+
+build-backend:
+	$(GOBUILD) $(LDFLAGS) -o $(BINARY_OUT) ./cmd/
 
 run:
-	$(GORUN) $(LDFLAGS) ./cmd/main.go
+	$(GORUN) ./cmd/main.go
+
+dev:
+	cd $(FRONTEND_DIR) && pnpm run dev
+
+clean: frontend-clean
+	$(GOCLEAN)
+	rm -f $(BINARY_OUT) $(BINARY_LINUX)
 
 tidy:
 	$(GOCMD) mod tidy
 
-test:
-	$(GOTEST) -v ./...
-
-clean:
-	$(GOCLEAN)
-	rm -f $(BINARY_NAME)
-	rm -f $(BINARY_UNIX)
-
 get-deps:
 	$(GOGET) -v -t -d ./...
 
-# Cross compilation
-build-linux:
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_UNIX) ./cmd/
-	chmod +x $(BINARY_UNIX)
+# --- Frontend tasks ---
+frontend-install:
+	cd $(FRONTEND_DIR) && $(NPM_CMD) install
 
-# Run tests with coverage
+frontend-build:
+	cd $(FRONTEND_DIR) && $(NPM_CMD) run build
+
+frontend-clean:
+	cd $(FRONTEND_DIR) && rm -rf .next out
+
+build-linux:
+	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 $(GOBUILD) $(LDFLAGS) -o $(BINARY_LINUX) ./cmd/
+
+# --- Docker ---
+docker-build:
+	@echo "🐳 Building Docker image: $(IMAGE_NAME):$(DOCKER_TAG)"
+	docker build -t $(IMAGE_NAME):$(DOCKER_TAG) -f $(DOCKERFILE) .
+
+docker-buildx:
+	docker buildx build \
+		--platform linux/amd64,linux/arm64 \
+		--push \
+		-t $(IMAGE_NAME):$(DOCKER_TAG) \
+		-f $(DOCKERFILE) .
+
+docker-push:
+	docker push $(IMAGE_NAME):$(DOCKER_TAG)
+
+# --- Tests ---
+test:
+	$(GOTEST) -v ./...
+
 test-coverage:
 	$(GOTEST) -v -coverprofile=coverage.out ./...
 	$(GOCMD) tool cover -html=coverage.out -o coverage.html
 
-# Run tests with race detector
 test-race:
 	$(GOTEST) -v -race ./...
 
-# Run tests with benchmarks
 test-bench:
-	$(GOTEST) -v -bench=. ./... 
+	$(GOTEST) -v -bench=. ./...

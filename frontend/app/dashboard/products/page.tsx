@@ -4,76 +4,28 @@ import { useAuth } from "@/context/UserContext";
 import { useState, useEffect } from "react";
 import { toast } from "react-toastify";
 import ProductItem from "@/components/ProductItem";
-import useSWR from 'swr';
-import { Product, ProductsResponse } from "@/lib/api";  
-
-export const getProducts = async (): Promise<ProductsResponse> => {
-  try {
-    const response = await fetch("http://localhost:8080/api/products", {
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      let errorMessage = `HTTP error! status: ${response.status}`;
-      try {
-        const errorData = await response.json();
-        if (errorData && errorData.message) {
-          errorMessage += `: ${errorData.message}`;
-        }
-      } catch (parseError) {
-        console.error("Failed to parse error JSON:", parseError);
-      }
-      throw new Error(errorMessage);
-    }
-
-    const products: ProductsResponse = await response.json();
-    return products;
-  } catch (error: any) {
-    console.error("Error fetching products:", error);
-    toast.error(`获取商品失败: ${error.message}`);
-    return { data: [], page: 1, size: 10, total: 0 }; // 返回空数组作为错误处理
-  }
-};
+import { fetchAndStoreProducts, Product, ProductsResponse } from "@/lib/api";  
+import { useProductStore } from "@/app/store/productStore";
 
 export default function ProductsPage() {
   const { user, isLoading: authIsLoading } = useAuth();
-  const { data: productsResponse, error, isLoading: fetchIsLoading } = useSWR<ProductsResponse, Error>(
-    user ? 'http://localhost:8080/api/products' : null, // 只有在用户登录后才请求数据
-    getProducts, // 直接使用导入的 getProducts 函数作为 fetcher
-    {
-      revalidateOnFocus: false,
-    }
-  );
-  const products = productsResponse?.data || [];
+  const { productsArray, setProducts } = useProductStore();
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (error) {
-      console.error("Error fetching products:", error);
-      toast.error(`获取商品失败: ${error.message}`);
+    if (user && productsArray.length === 0) {
+      fetchAndStoreProducts("http://localhost:8080/api/products").then((products) => {
+        setProducts(products.data);
+      });
     }
-  }, [error]);
+  }, [user]);
 
   if (authIsLoading || (!user && !error)) {
-    return <div>Checking authentication...</div>; // 或者显示其他加载状态
+    return toast.info("Checking authentication...");
   }
 
   if (!user) {
-    return <div>Please log in to view products.</div>; // 或者重定向到登录页面
-  }
-
-  if (fetchIsLoading) {
-    return (
-      <div className="flex justify-center items-center h-screen">
-        <div>Loading products...</div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return <div>Failed to load products.</div>;
+    return toast.info("Please log in to view products.");
   }
 
   return (
@@ -86,9 +38,9 @@ export default function ProductsPage() {
 
         {/* Product management content will go here */}
         <div className="container mx-auto py-8">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {products.map((product: Product) => (
-              <ProductItem key={product.id} product={product} full={true} />
+          <div className="grid gap-4 grid-cols-auto-fit">
+            {productsArray.map((product: Product) => (
+              <ProductItem key={product.id} product={product} />
             ))}
           </div>
         </div>

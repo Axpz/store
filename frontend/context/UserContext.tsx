@@ -7,6 +7,7 @@ interface User {
   id: string;
   username: string;
   plan: string;
+  email: string;  
 }
 
 interface UserContextType {

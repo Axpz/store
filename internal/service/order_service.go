@@ -9,6 +9,7 @@ import (
 	"github.com/Axpz/store/internal/types"
 	"github.com/Axpz/store/internal/utils"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type OrderService struct {
@@ -96,13 +97,28 @@ func (s *OrderService) GetOrder(c *gin.Context, id string) (*types.Order, error)
 
 func (s *OrderService) GetOrders(c *gin.Context, page, pageSize int) ([]types.Order, int, error) {
 	userID := utils.GetUserIDFromContext(c)
+	logger := utils.LoggerFromContext(c.Request.Context())
+
 	if userID == "" {
 		return nil, 0, fmt.Errorf("user id is empty")
 	}
 
 	orders, err := s.store.GetOrdersByUserID(userID)
+
 	if err != nil {
 		return nil, 0, err
+	}
+
+	for i := range orders {
+		for j := range orders[i].Products {
+			p, err := s.store.GetProduct(orders[i].Products[j].ID)
+			if err != nil {
+				logger.Error("ignored failed to get product", zap.Error(err))
+				continue
+			}
+			orders[i].Products[j].Name = p.Name
+			orders[i].Products[j].Content = p.Content
+		}
 	}
 
 	return orders, len(orders), nil

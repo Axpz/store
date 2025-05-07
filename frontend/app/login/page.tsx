@@ -1,5 +1,6 @@
 import Header from '@/components/Header';
 import SignInForm from '@/components/SignInForm';
+import { Suspense } from 'react';
 
 export default function LoginPage() {
   return (
@@ -18,7 +19,9 @@ export default function LoginPage() {
               </a>
             </p>
           </div>
-          <SignInForm />
+          <Suspense fallback={<div>Loading...</div>}>
+            <SignInForm />
+          </Suspense>
         </div>
       </div>
     </>

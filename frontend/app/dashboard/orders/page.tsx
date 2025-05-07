@@ -11,69 +11,6 @@ import { toast } from "react-toastify";
 import { Order, OrdersResponse } from "@/lib/api";
 import { useOrderStore } from "@/app/store/productStore";
 
-// // 模拟订单数据
-// const ordersData: Order[] = [
-//   {
-//     id: 'ORDER123450',
-//     user_id: 'tkK0IXs0sejTvZFfxlxEUg',
-//     status: 'paid',
-//     currency: 'USD',
-//     products: [{ id: 'gcp_1001', name: 'Google Cloud Solution Architect' }],
-//     total_amount: 1,
-//     paid_amount: 1,
-//     description: 'Google Cloud Solution Architect',
-//     created: 1682678400,
-//     updated: 1682678460,
-//   },
-//   {
-//     id: 'ORDER123451',
-//     user_id: 'tkK0IXs0sejTvZFfxlxEUg',
-//     status: 'paid',
-//     currency: 'USD',
-//     products: [{ id: 'gcp_1001', name: 'Google Cloud Solution Architect' }, { id: 'gcp_1002', name: 'Google AI Solution Architect' }],
-//     total_amount: 2,
-//     paid_amount: 2,
-//     description: 'Google Cloud Solution Architect and Google AI Solution Architect',
-//     created: 1682678400,
-//     updated: 1682678460,
-//   },
-//   {
-//     id: 'ORDER12345',
-//     user_id: 'tkK0IXs0sejTvZFfxlxEUg',
-//     status: 'paid',
-//     currency: 'CNY',
-//     products: [{ id: 'P001', name: '商品 A' }, { id: 'P002', name: '商品 B' }],
-//     total_amount: 15000,
-//     paid_amount: 15000,
-//     description: '测试订单 1',
-//     created: 1682678400,
-//     updated: 1682678460,
-//   },
-//   {
-//     id: 'ORDER12346',
-//     user_id: 'tkK0IXs0sejTvZFfxlxEUg',
-//     status: 'pending',
-//     currency: 'CNY',
-//     products: [{ id: 'P003', name: '商品 C' }],
-//     total_amount: 5000,
-//     paid_amount: 0,
-//     description: '测试订单 2',
-//     created: 1682592000,
-//     updated: 1682592060,
-//   },
-//   {
-//     id: 'ORDER11223',
-//     user_id: 'USER002',
-//     status: 'shipped',
-//     currency: 'USD',
-//     products: [{ id: 'P004', name: '商品 D' }, { id: 'P005', name: '商品 E' }, { id: 'P006', name: '商品 F' }],
-//     total_amount: 20000,
-//     paid_amount: 20000,
-//     description: '测试订单 3',
-//     created: 1682505600,
-//     updated: 1682505660,
-//   },
-// ];
 
 export default function OrdersPage() {
   const { user, isLoading } = useAuth();

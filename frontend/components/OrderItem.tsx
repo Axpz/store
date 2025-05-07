@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React from "react";
 import {
@@ -7,20 +7,17 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
-import { Label } from "@radix-ui/react-label";
-import { Separator } from "@radix-ui/react-separator";
-import { ArrowRightIcon, DotFilledIcon, ArrowDownIcon } from "@radix-ui/react-icons";
+import { Label } from "@/components/ui/label";
+import {
+  ArrowRightIcon,
+  DotFilledIcon,
+  ArrowDownIcon,
+} from "@radix-ui/react-icons";
 import { Order } from "@/lib/api";
 import { formatPrice, formatDate } from "@/lib/utils";
 import Link from "next/link";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@radix-ui/react-dialog";
-import { ScrollArea } from '@radix-ui/react-scroll-area';
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 interface OrderItemProps {
   order: Order;
@@ -44,8 +41,8 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
   };
 
   return (
-    <Card className="shadow-md rounded-md p-4 flex flex-col justify-between">
-      <CardHeader className="flex justify-between items-center">
+    <Card className="group relative overflow-hidden rounded-lg justify-between border border-gray-200 dark:border-gray-800 bg-white dark:bg-black hover:border-gray-300 dark:hover:border-gray-700 transition-all shadow-md">
+      <CardHeader className="flex justify-between items-center p-4">
         <Label className="text-lg font-semibold">订单 ID: {order.id}</Label>
         <div
           className={`inline-flex items-center rounded-full px-2 py-1 text-xs font-semibold ${
@@ -56,44 +53,61 @@ const OrderItem: React.FC<OrderItemProps> = ({ order }) => {
           {order.status}
         </div>
       </CardHeader>
-      <CardContent className="grid gap-2 mt-2">
-        <div>
-          <Label className="text-sm">商品: {order.products.map((p) => p.name).join(", ")}{" "}
-          {order.products.length > 2 ? "..." : ""}</Label>
+      <CardContent className="p-4 grid gap-2">
+        <div className="flex flex-col items-center"> {/* Center商品 */}
+          <Label className="text-sm text-gray-500">商品:</Label>
+          <p className="text-sm text-center"> {/* Center商品文本 */}
+            {order.products.map((p) => p.name).join(", ")}
+            {order.products.length > 2 ? "..." : ""}
+          </p>
         </div>
-        <div>
-          <Label className="text-sm">总金额: {formatPrice(order.total_amount, order.currency)}</Label>
+        <div className="flex flex-col items-center"> {/* Center总金额 */}
+          <Label className="text-sm text-gray-500">总金额:</Label>
+          <p className="text-sm font-medium">
+            {formatPrice(order.total_amount, order.currency)}
+          </p>
         </div>
 
-        <button
+        <Button
+          variant="ghost"
           onClick={toggleExpand}
-          className="inline-flex items-center justify-center bg-white hover:bg-gray-100 text-blue-500 font-bold py-2 px-4 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-300 active:outline-none cursor-pointer w-48 mt-2"
+          className="inline-flex items-center justify-center text-blue-500 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20 w-48 mt-2"
         >
           {isExpanded ? (
             <ArrowDownIcon className="mr-2 h-4 w-4" aria-hidden="true" />
           ) : (
             <ArrowRightIcon className="mr-2 h-4 w-4" aria-hidden="true" />
           )}
-        </button>
+        </Button>
 
         {isExpanded && (
-          <div className="mt-2 grid gap-2 text-sm">
+          <div className="mt-2 grid gap-4">
             {order.products.map((p) => (
-              <div key={p.id}>
-                <p>{p.name}</p>
-                <p>{p.content.map((c) => (
-                  <p key={c}>{c}</p>
-                ))}</p>
+              <div key={p.id} className="space-y-2">
+                <p className="font-semibold">{p.name}</p>
+                {order.status === "completed" && p.content && p.content.length > 0 && (
+                  <div className="mt-1 flex flex-col gap-1">
+                    {p.content.map((c, i) => (
+                      <Link
+                        href={`/products/${p.id}/${i}`}
+                        key={c}
+                        className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                      >
+                        {c}
+                      </Link>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
-            
-            <div>
-              <Label>创建时间</Label>
-              <p>{formatDate(order.created)}</p>
-            </div>
-            <div>
-              <Label>更新时间</Label>
-              <p>{formatDate(order.updated)}</p>
+
+            <div className="space-y-2 flex flex-col items-center">
+              <div>
+                <Label className="text-sm text-gray-500">创建时间 {formatDate(order.created)}</Label>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-500">更新时间 {formatDate(order.updated)}</Label>
+              </div>
             </div>
           </div>
         )}
