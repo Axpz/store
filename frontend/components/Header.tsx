@@ -20,10 +20,6 @@ export default function Header() {
     }
   };
 
-  if (isLoading) {
-    return null; // 正在加载时不渲染，避免 hydration 问题
-  }
-
   return (
     <nav className="fixed top-0 left-0 right-0 h-16 border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-black z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-between">

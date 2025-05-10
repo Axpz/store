@@ -16,6 +16,7 @@ type Config struct {
 	Server  ServerConfig  `yaml:"server"`
 	Storage StorageConfig `yaml:"storage"`
 	JWT     JWTConfig     `yaml:"jwt"`
+	Email   EmailConfig   `yaml:"email"`
 
 	Logger *zap.Logger
 }
@@ -59,6 +60,15 @@ type StorageConfig struct {
 type JWTConfig struct {
 	Secret string        `yaml:"secret"`
 	Expire time.Duration `yaml:"expire"`
+}
+
+// EmailConfig 邮件配置
+type EmailConfig struct {
+	Host     string `yaml:"host"`
+	Port     int    `yaml:"port"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
+	From     string `yaml:"from"`
 }
 
 // Load 从文件加载配置

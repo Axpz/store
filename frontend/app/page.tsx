@@ -1,37 +1,57 @@
 "use client";
 
 import Header from "@/components/Header";
-import ProductItem from "@/components/ProductItem";   
+import ProductItem from "@/components/ProductItem";
 import { useEffect } from "react";
 import { toast } from "react-toastify";
 import useSWR from "swr";
 import { ProductsResponse } from "@/lib/api";
 import { fetchAndStoreProducts } from "@/lib/api";
-
+import { useProductStore } from "./store/productStore";
 
 export default function Home() {
-  const { data: productsResponse, error, isLoading: fetchIsLoading } = useSWR<ProductsResponse, Error>(
-    'http://localhost:8080/api/products',
-    fetchAndStoreProducts,
-    {
-      revalidateOnFocus: false,
-    }
-  );
-  const products = productsResponse?.data || [];
-  useEffect(() => {
-    if (error) {
-      console.error("Error fetching products:", error);
-      toast.error(`Error fetching products: ${error.message}`);
-    }
-  }, [error]);
+  const { productsArray, setProducts } = useProductStore();
 
-  if (fetchIsLoading) {
+  // 判断 productsArray 是否为空，且发送请求
+  const {
+    data: productsResponse,
+    error: fetchError,
+    isLoading: fetchIsLoading,
+  } = useSWR<ProductsResponse, Error>(
+    productsArray.length === 0 ? "http://localhost:8080/api/products" : null,
+    fetchAndStoreProducts,
+    { revalidateOnFocus: false }
+  );
+
+  // 处理请求错误
+  useEffect(() => {
+    if (fetchError) {
+      console.error("Error fetching products:", fetchError);
+      toast.error(`Error fetching products: ${fetchError.message}`);
+    }
+  }, [fetchError]);
+
+  // 如果有新的产品数据，更新到状态
+  useEffect(() => {
+    if (productsResponse?.data) {
+      setProducts(productsResponse.data);
+    }
+  }, [productsResponse, setProducts]);
+
+  // 如果正在加载数据，显示 loading 页面
+  if (fetchIsLoading || productsArray.length === 0) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <div>Loading ...</div>
-      </div>
+      <>
+        <Header />
+        <div className="flex justify-center items-center h-screen">
+          <div>Loading...</div>
+        </div>
+      </>
     );
   }
+
+  // 产品数据加载完成后渲染
+  const products = productsArray;
 
   return (
     <>

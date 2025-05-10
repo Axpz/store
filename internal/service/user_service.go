@@ -1,7 +1,6 @@
 package service
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/Axpz/store/internal/storage"
@@ -11,101 +10,120 @@ import (
 	"go.uber.org/zap"
 )
 
-// UserService 提供用户相关的业务逻辑
+// UserService
 type UserService struct {
 	store storage.StoreInterface
 }
 
-// NewUserService 创建一个新的用户服务
+// NewUserService
 func NewUserService(store storage.StoreInterface) *UserService {
 	return &UserService{
 		store: store,
 	}
 }
 
-// CreateUser 创建新用户
+// CreateUser
 func (s *UserService) CreateUser(c *gin.Context, user *types.User) error {
 
-	// 创建用户对象
+	// create user object
 	user.ID = utils.GetUserIDFromEmail(user.Email)
 	user.Created = time.Now().Unix()
 	user.Updated = time.Now().Unix()
 	user.LastLogin = time.Now().Unix()
+	user.Verified = &[]bool{false}[0]
 
 	logger := utils.LoggerFromContext(c.Request.Context())
 
-	// 保存用户
+	// save user
 	if err := s.store.Create(storage.User(*user)); err != nil {
-		logger.Error("创建用户失败", zap.Error(err))
-		return fmt.Errorf("创建用户失败: %v", err)
+		logger.Error("create user failed", zap.Error(err))
+		return err
 	}
 
 	return nil
 }
 
-// GetUser 获取用户信息
+// GetUser
 func (s *UserService) GetUser(c *gin.Context, id string) (*types.User, error) {
 	logger := utils.LoggerFromContext(c.Request.Context())
-	logger.Info("获取用户", zap.String("id", id))
 	user, err := s.store.Get(id)
 	if err != nil {
-		return nil, fmt.Errorf("获取用户失败: %v", err)
+		logger.Error("get user failed", zap.Error(err))
+		return nil, err
 	}
 
 	return &user, nil
 }
 
-// UpdateUser 更新用户信息
-func (s *UserService) UpdateUser(c *gin.Context, id, username, email, plan string) error {
-	// 获取现有用户
-	existingUser, err := s.store.Get(id)
+// UpdateUser
+func (s *UserService) UpdateUser(c *gin.Context, user *types.User) error {
+	logger := utils.LoggerFromContext(c.Request.Context())
+
+	existingUser, err := s.store.Get(user.ID)
 	if err != nil {
-		return fmt.Errorf("获取用户失败: %v", err)
+		logger.Error("get user failed", zap.Error(err))
+		return err
 	}
 
-	// 更新用户信息
-	existingUser.Username = username
-	existingUser.Email = email
-	existingUser.Plan = plan
+	if user.Username != "" {
+		existingUser.Username = user.Username
+	}
+	if user.Email != "" {
+		existingUser.Email = user.Email
+	}
+	if user.Password != "" {
+		existingUser.Password = user.Password
+	}
+	if user.Verified != nil && *user.Verified {
+		existingUser.Verified = user.Verified
+	}
+
+	existingUser.Plan = user.Plan
 	existingUser.Updated = time.Now().Unix()
 
-	// 保存更新
+	// save update
 	if err := s.store.Update(existingUser); err != nil {
-		return fmt.Errorf("更新用户失败: %v", err)
+		logger.Error("update user failed", zap.Error(err))
+		return err
 	}
 
 	return nil
 }
 
-// UpdateUser 更新用户信息
+// UpdateUserLastLogin
 func (s *UserService) UpdateUserLastLogin(c *gin.Context, id string) error {
-	// 获取现有用户
+	logger := utils.LoggerFromContext(c.Request.Context())
+
 	existingUser, err := s.store.Get(id)
 	if err != nil {
-		return fmt.Errorf("获取用户失败: %v", err)
+		logger.Error("get user failed", zap.Error(err))
+		return err
 	}
 
-	// 更新用户信息
 	existingUser.LastLogin = time.Now().Unix()
 
-	// 保存更新
+	// save update
 	if err := s.store.Update(existingUser); err != nil {
-		return fmt.Errorf("更新用户失败: %v", err)
+		logger.Error("update user failed", zap.Error(err))
+		return err
 	}
 
 	return nil
 }
 
-// DeleteUser 删除用户
+// DeleteUser
 func (s *UserService) DeleteUser(c *gin.Context, id string) error {
-	// 检查用户是否存在
+	logger := utils.LoggerFromContext(c.Request.Context())
+
 	if _, err := s.store.Get(id); err != nil {
-		return fmt.Errorf("用户不存在: %v", err)
+		logger.Error("user not found", zap.Error(err))
+		return err
 	}
 
-	// 删除用户
+	// delete user
 	if err := s.store.Delete(id); err != nil {
-		return fmt.Errorf("删除用户失败: %v", err)
+		logger.Error("delete user failed", zap.Error(err))
+		return err
 	}
 
 	return nil
