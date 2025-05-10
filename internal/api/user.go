@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -10,19 +11,27 @@ import (
 	"github.com/Axpz/store/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // UserHandler 用户处理器
 type UserHandler struct {
-	userService *service.UserService
-	jwtSecret   string
+	userService  *service.UserService
+	emailService *service.EmailService
+	jwtSecret    string
 }
 
 // NewUserHandler 创建用户处理器
-func NewUserHandler(userService *service.UserService, jwtSecret string) *UserHandler {
+func NewUserHandler(
+	userService *service.UserService,
+	emailService *service.EmailService,
+	jwtSecret string,
+) *UserHandler {
 	return &UserHandler{
-		userService: userService,
-		jwtSecret:   jwtSecret,
+		userService:  userService,
+		emailService: emailService,
+		jwtSecret:    jwtSecret,
 	}
 }
 
@@ -52,7 +61,7 @@ func (h *UserHandler) RegisterRoutes(router *gin.Engine) {
 func (h *UserHandler) Login(c *gin.Context) {
 	var req types.LoginRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request parameters"})
 		return
 	}
 
@@ -63,21 +72,26 @@ func (h *UserHandler) Login(c *gin.Context) {
 
 	user, err := h.userService.GetUser(c, utils.GetUserIDFromEmail(req.Email))
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
+		return
+	}
+
+	if user.Verified != nil && !*user.Verified {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not verified, please check your email for verification."})
+		return
+	}
+
+	if !user.CheckPassword(req.Password) {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid username or password"})
 		return
 	}
 
 	h.userService.UpdateUserLastLogin(c, user.ID)
 
-	if !user.CheckPassword(req.Password) {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
-		return
-	}
-
 	// 生成token
 	token, err := jwt.GenerateToken(user.ID, user.Username, h.jwtSecret, 7*24*time.Hour)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "生成token失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate token"})
 		return
 	}
 
@@ -106,17 +120,72 @@ func (h *UserHandler) Logout(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully logged out"})
 }
 
-// SignUp 处理用户注册
+// SignUp
 func (h *UserHandler) SignUp(c *gin.Context) {
-	h.CreateUser(c)
+	var req types.RegisterRequest
+	var logger = utils.LoggerFromContext(c.Request.Context())
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request parameters" + err.Error()})
+		return
+	}
+
+	logReq := req
+	logReq.Password = "*"
+	logger.Info("SignUp", zap.Any("req", logReq))
+
+	user := types.User{
+		Username: req.Username,
+		Password: req.Password,
+		Email:    req.Email,
+	}
+
+	user.HashPassword()
+
+	userGet, err := h.userService.GetUser(c, utils.GetUserIDFromEmail(user.Email))
+	if err != nil && status.Code(err) != codes.NotFound {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user:" + err.Error()})
+		return
+	}
+
+	if userGet != nil {
+		if userGet.Verified == nil || *userGet.Verified {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user already exists"})
+			return
+		}
+	} else {
+		if err := h.userService.CreateUser(c, &user); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create user:" + err.Error()})
+			return
+		}
+	}
+
+	tokenString, err := user.GenVerificationJWTToken(h.jwtSecret, 7*24*time.Hour)
+	if err != nil {
+		logger.Error("failed to generate verification token", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to generate verification token:" + err.Error()})
+		return
+	}
+
+	verificationLink := fmt.Sprintf("https://www.axpz.org/api/auth/verify?token=%s", tokenString)
+	logger.Info("Verification link", zap.String("link", verificationLink))
+
+	if err := h.emailService.SendVerificationEmail(c, verificationLink, user.Email); err != nil {
+		logger.Error("failed to send verification email", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send verification email:" + err.Error()})
+		return
+	}
+
+	logger.Info("Verification email sent", zap.String("email", user.Email))
+	c.JSON(http.StatusOK, gin.H{"message": "Verification email sent"})
 }
 
-// CreateUser 创建用户
+// CreateUser
 func (h *UserHandler) CreateUser(c *gin.Context) {
 	var req types.RegisterRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request parameters"})
 		return
 	}
 
@@ -134,7 +203,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 	// 加密密码
 	if err := user.HashPassword(); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "密码加密失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to hash password"})
 		return
 	}
 
@@ -146,7 +215,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 
 	userGet, err := h.userService.GetUser(c, user.ID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "创建用户后获取用户失败"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user after creating"})
 		return
 	}
 
@@ -158,7 +227,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 	id := c.Param("id")
 	user, err := h.userService.GetUser(c, id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+		c.JSON(http.StatusNotFound, gin.H{"error": "user not found"})
 		return
 	}
 
@@ -167,19 +236,41 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 
 // UpdateUser 更新用户信息
 func (h *UserHandler) UpdateUser(c *gin.Context) {
-	id := c.Param("id")
-	var user types.User
-	if err := c.ShouldBindJSON(&user); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "无效的请求参数"})
+	var userReq types.UpdateUserRequest
+	if err := c.ShouldBindJSON(&userReq); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request parameters"})
 		return
 	}
 
-	if err := h.userService.UpdateUser(c, id, user.Username, user.Email, user.Plan); err != nil {
+	user := types.User{
+		Username: userReq.Username,
+		Email:    userReq.Email,
+		Password: userReq.Password,
+		Plan:     userReq.Plan,
+	}
+
+	if userReq.Password != "" {
+		user.Password = userReq.Password
+		user.HashPassword()
+	}
+
+	logger := utils.LoggerFromContext(c.Request.Context())
+	logReq := userReq
+	logReq.Password = "*"
+	logger.Info("UpdateUser", zap.Any("req", logReq))
+
+	if err := h.userService.UpdateUser(c, &user); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, user)
+	userGet, err := h.userService.GetUser(c, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user after updating"})
+		return
+	}
+
+	c.JSON(http.StatusOK, userGet)
 }
 
 // DeleteUser 删除用户
@@ -193,19 +284,39 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-// Verify 验证用户会话
 func (h *UserHandler) Verify(c *gin.Context) {
-	userID := utils.GetUserIDFromContext(c)
-	if userID == "" {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+	logger := utils.LoggerFromContext(c.Request.Context())
+
+	tokenString := c.Query("token")
+	if tokenString == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing token"})
 		return
 	}
 
-	user, err := h.userService.GetUser(c, userID)
+	user := types.User{}
+
+	user, err := user.VerifyAndParseVerificationJWTToken(h.jwtSecret, tokenString)
 	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid or expired token" + err.Error()})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"user": user})
+	user.Verified = &[]bool{true}[0]
+	user.ID = utils.GetUserIDFromEmail(user.Email)
+
+	userGet, err := h.userService.GetUser(c, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	if userGet.Verified == nil && *userGet.Verified {
+		c.Redirect(http.StatusFound, "https://www.axpz.org/login?verify=success")
+	}
+
+	h.userService.UpdateUser(c, &user)
+
+	logger.Info("user verified and updated succeed", zap.Any("user", user.Email))
+
+	c.Redirect(http.StatusOK, "https://www.axpz.org/login?verify=success")
 }

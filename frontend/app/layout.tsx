@@ -35,7 +35,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" sizes="any" />
         {/* Google tag (gtag.js) */}
         <Script
-          src="https://www.googletagmanager.com/gtag/js?id=G-Y7KSK53R96"
+          src="https://www.googletagmanager.com/gtag/js?id=G-HWZCSZVMX7"
           strategy="afterInteractive"
         />
         <Script id="gtag-init" strategy="afterInteractive">
@@ -43,7 +43,7 @@ export default function RootLayout({
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
-            gtag('config', 'G-Y7KSK53R96', {
+            gtag('config', 'G-HWZCSZVMX7', {
               linker: {
                 domains: ['axpz.github.io', 'axpz.org'],
               },

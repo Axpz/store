@@ -9,18 +9,17 @@ import (
 	"github.com/Axpz/store/internal/types"
 	"github.com/Axpz/store/internal/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 
 type OrderService struct {
-	store           storage.StoreInterface
-	paymentProvider PaymentProvider
+	store storage.StoreInterface
 }
 
-func NewOrderService(store storage.StoreInterface, paymentProvider PaymentProvider) *OrderService {
+func NewOrderService(store storage.StoreInterface) *OrderService {
 	return &OrderService{
-		store:           store,
-		paymentProvider: paymentProvider,
+		store: store,
 	}
 }
 
@@ -31,12 +30,12 @@ func (s *OrderService) CreateOrder(c *gin.Context, order *types.Order) error {
 		return fmt.Errorf("user id is empty")
 	}
 
-	// Create payment order
-	paymentOrderID, err := s.paymentProvider.CreateOrder(c.Request.Context(), int(order.TotalAmount), order.Currency)
-	if err != nil {
-		return fmt.Errorf("failed to create payment order: %v", err)
-	}
-	order.ID = paymentOrderID
+	// // Create payment order
+	// paymentOrderID, err := s.paymentProvider.CreateOrder(c.Request.Context(), int(order.TotalAmount), order.Currency)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to create payment order: %v", err)
+	// }
+	// order.ID = paymentOrderID
 	// Set default values
 	now := time.Now().Unix()
 	order.Created = now
@@ -47,31 +46,31 @@ func (s *OrderService) CreateOrder(c *gin.Context, order *types.Order) error {
 	return s.store.CreateOrder(storage.Order(*order))
 }
 
-func (s *OrderService) CaptureOrder(c *gin.Context, orderID string) error {
-	order, err := s.store.GetOrder(orderID)
-	if err != nil {
-		return err
-	}
+// func (s *OrderService) CaptureOrder(c *gin.Context, orderID string) error {
+// 	order, err := s.store.GetOrder(orderID)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	if order.UserID != utils.GetUserIDFromContext(c) {
-		return fmt.Errorf("order is not owned by current user")
-	}
+// 	if order.UserID != utils.GetUserIDFromContext(c) {
+// 		return fmt.Errorf("order is not owned by current user")
+// 	}
 
-	if order.Status != "pending" {
-		return fmt.Errorf("order status is not pending")
-	}
+// 	if order.Status != "pending" {
+// 		return fmt.Errorf("order status is not pending")
+// 	}
 
-	// Capture payment
-	err = s.paymentProvider.CaptureOrder(c.Request.Context(), order.ID)
-	if err != nil {
-		return fmt.Errorf("failed to capture payment: %v", err)
-	}
+// 	// Capture payment
+// 	err = s.paymentProvider.CaptureOrder(c.Request.Context(), order.ID)
+// 	if err != nil {
+// 		return fmt.Errorf("failed to capture payment: %v", err)
+// 	}
 
-	// Update order status
-	order.Status = "completed"
-	order.Updated = time.Now().Unix()
-	return s.store.UpdateOrder(storage.Order(order))
-}
+// 	// Update order status
+// 	order.Status = "completed"
+// 	order.Updated = time.Now().Unix()
+// 	return s.store.UpdateOrder(storage.Order(order))
+// }
 
 func (s *OrderService) GetOrder(c *gin.Context, id string) (*types.Order, error) {
 	order, err := s.store.GetOrder(id)
@@ -146,4 +145,26 @@ func (s *OrderService) UpdateOrder(c *gin.Context, order *types.Order) error {
 
 func (s *OrderService) DeleteOrder(c *gin.Context, id string) error {
 	return s.store.DeleteOrder(id)
+}
+
+func (s *OrderService) MarkOrderAsPaid(c *gin.Context, orderID string) error {
+	logger := utils.LoggerFromContext(c.Request.Context())
+	logger.Debug("marking order as paid", zap.String("order_id", orderID))
+
+	// TODO: 实现订单状态更新逻辑
+	// 1. 验证订单状态
+	// 2. 更新订单状态为已支付
+	// 3. 记录支付信息
+	// 4. 触发后续业务逻辑（如发货等）
+
+	order, err := s.store.GetOrder(orderID)
+	if err != nil {
+		return errors.Wrap(err, "failed to get order")
+	}
+
+	logger.Info("order marked as paid successfully", zap.String("order_id", orderID))
+	// Update order status
+	order.Status = "paid"
+	order.Updated = time.Now().Unix()
+	return s.store.UpdateOrder(storage.Order(order))
 }

@@ -8,6 +8,9 @@ import (
 
 	"github.com/Axpz/store/internal/config"
 	"github.com/google/go-github/v45/github"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
 	"golang.org/x/oauth2"
 )
 
@@ -49,7 +52,7 @@ func (s *GitHubStore) Create(user User) error {
 	}
 
 	if _, exists := s.users[user.ID]; exists {
-		return fmt.Errorf("用户已存在")
+		return status.Error(codes.AlreadyExists, "user already exists")
 	}
 
 	s.users[user.ID] = user
@@ -70,7 +73,7 @@ func (s *GitHubStore) Get(id string) (User, error) {
 
 	result, exists := s.users[id]
 	if !exists {
-		return result, fmt.Errorf("用户不存在")
+		return result, status.Error(codes.NotFound, "user not found")
 	}
 
 	return result, nil
@@ -87,7 +90,7 @@ func (s *GitHubStore) Update(user User) error {
 	}
 
 	if _, exists := s.users[user.ID]; !exists {
-		return fmt.Errorf("用户不存在")
+		return status.Error(codes.NotFound, "user not found")
 	}
 
 	s.users[user.ID] = user
@@ -105,7 +108,7 @@ func (s *GitHubStore) Delete(id string) error {
 	}
 
 	if _, exists := s.users[id]; !exists {
-		return fmt.Errorf("用户不存在")
+		return status.Error(codes.NotFound, "user not found")
 	}
 
 	delete(s.users, id)
@@ -123,7 +126,7 @@ func (s *GitHubStore) CreateComment(comment Comment) error {
 	}
 
 	if _, exists := s.comments[comment.ID]; exists {
-		return fmt.Errorf("评论已存在")
+		return status.Error(codes.AlreadyExists, "comment already exists")
 	}
 
 	s.comments[comment.ID] = comment
@@ -144,7 +147,7 @@ func (s *GitHubStore) GetComment(id string) (Comment, error) {
 
 	comment, exists := s.comments[id]
 	if !exists {
-		return result, fmt.Errorf("评论不存在")
+		return result, status.Error(codes.NotFound, "comment not found")
 	}
 
 	result = comment
@@ -162,7 +165,7 @@ func (s *GitHubStore) UpdateComment(comment Comment) error {
 	}
 
 	if _, exists := s.comments[comment.ID]; !exists {
-		return fmt.Errorf("评论不存在")
+		return status.Error(codes.NotFound, "comment not found")
 	}
 
 	s.comments[comment.ID] = comment
@@ -180,7 +183,7 @@ func (s *GitHubStore) DeleteComment(id string) error {
 	}
 
 	if _, exists := s.comments[id]; !exists {
-		return fmt.Errorf("评论不存在")
+		return status.Error(codes.NotFound, "comment not found")
 	}
 
 	delete(s.comments, id)

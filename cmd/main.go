@@ -21,16 +21,11 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer logger.Sync() // 确保日志被刷新
+	defer logger.Sync()
 
-	// 加载配置
-	cfg, err := config.Load("config.yaml")
-	if err != nil {
-		log.Fatalf("加载配置失败: %v", err)
-	}
+	cfg := config.Load("config.yaml")
 	cfg.Logger = logger
 
-	// 设置路由
 	r := gin.Default()
 	r.Use(ginzap.Ginzap(logger, time.RFC3339, true))
 	r.Use(ginzap.RecoveryWithZap(logger, true))
@@ -38,26 +33,27 @@ func main() {
 	r.Use(middleware.CORS())
 	r.Use(middleware.RateLimit(60, time.Minute))
 
-	// 创建存储实例
+	// initialize storage instance
 	store, err := storage.New(cfg)
 	if err != nil {
-		log.Fatalf("创建存储失败: %v", err)
+		log.Fatalf("get store instace failed: %v", err)
 	}
 
 	// 创建支付提供者
-	paypalProvider, err := service.NewPayPalProvider()
+	payService, err := service.NewPaymentService(cfg)
 	if err != nil {
 		logger.Fatal("创建PayPal提供者失败", zap.Error(err))
 	}
 
 	// 创建服务和处理器
 	userService := service.NewUserService(store)
-	userHandler := api.NewUserHandler(userService, cfg.JWT.Secret)
+	emailService := service.NewEmailService(cfg)
+	userHandler := api.NewUserHandler(userService, emailService, cfg.JWT.Secret)
 	userHandler.RegisterRoutes(r)
 
 	// 订单相关路由
-	orderService := service.NewOrderService(store, paypalProvider)
-	orderHandler := api.NewOrderHandler(orderService, cfg.JWT.Secret)
+	orderService := service.NewOrderService(store)
+	orderHandler := api.NewOrderHandler(orderService, payService, cfg.JWT.Secret)
 	orderHandler.RegisterRoutes(r)
 
 	// 商品相关路由
