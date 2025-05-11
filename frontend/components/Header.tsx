@@ -8,6 +8,10 @@ export default function Header() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState('');
 
+  if (isLoading) {
+    return null;
+  }
+
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);

@@ -12,6 +12,7 @@ export default function SignInForm() {
   const [error, setError] = useState('');
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard/orders'; // 获取 callbackUrl，默认为首页
+  const verified = searchParams.get("verify") === "success";
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -70,6 +71,30 @@ export default function SignInForm() {
   };
 
   return (
+    <>
+    {verified ? (
+      <div>
+        <h2 className="text-green-600 text-center text-2xl font-medium">
+          ✅ Email verified, please login
+        </h2>
+      </div>
+    ) : (
+      <div>
+        <h2 className="mt-6 text-center text-4xl font-extrabold text-gray-900 dark:text-white">
+          Login to your account
+        </h2>
+        <p className="mt-3 text-center text-lg text-gray-600 dark:text-gray-400">
+          Don't have an account?{" "}
+          <a
+            href="/signup"
+            className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400"
+          >
+            Sign up
+          </a>
+        </p>
+      </div>
+    )}
+
     <Form.Root className="space-y-8" onSubmit={handleSubmit}>
       {error && (
         <div className="p-4 text-base text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300" role="alert">
@@ -153,5 +178,6 @@ export default function SignInForm() {
         </button>
       </Form.Submit>
     </Form.Root>
+    </>
   );
 } 

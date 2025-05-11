@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -14,12 +15,14 @@ import (
 
 type OrderHandler struct {
 	orderService *service.OrderService
+	payService   *service.PaymentService
 	jwtSecret    string
 }
 
-func NewOrderHandler(orderService *service.OrderService, jwtSecret string) *OrderHandler {
+func NewOrderHandler(orderService *service.OrderService, payService *service.PaymentService, jwtSecret string) *OrderHandler {
 	return &OrderHandler{
 		orderService: orderService,
+		payService:   payService,
 		jwtSecret:    jwtSecret,
 	}
 }
@@ -35,6 +38,9 @@ func (h *OrderHandler) RegisterRoutes(router *gin.Engine) {
 		orders.PUT("/:id", h.UpdateOrder)
 		orders.DELETE("/:id", h.DeleteOrder)
 	}
+
+	// PayPal Webhook (no Auth)
+	router.POST("/api/orders/webhook", h.HandlePaymentWebhook)
 }
 
 func (h *OrderHandler) CreateOrder(c *gin.Context) {
@@ -69,6 +75,37 @@ func (h *OrderHandler) CreateOrder(c *gin.Context) {
 	c.JSON(http.StatusCreated, dbOrder)
 }
 
+func (h *OrderHandler) HandlePaymentWebhook(c *gin.Context) {
+	// logger := utils.LoggerFromContext(c.Request.Context())
+	// event, err := h.orderService.HandlePayPalWebhook(c)
+	// if err != nil {
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 	return
+	// }
+
+	// switch event.EventType {
+	// case "PAYMENT.CAPTURE.COMPLETED":
+	// 	// 提取订单 ID
+	// 	orderID, err := extractOrderID(event)
+	// 	if err != nil {
+	// 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid order ID in webhook event"})
+	// 		return
+	// 	}
+
+	// 	// 标记为已支付
+	// 	if err := h.orderService.MarkOrderAsPaid(c.Request.Context(), orderID); err != nil {
+	// 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to mark order as paid"})
+	// 		return
+	// 	}
+
+	// 	logger.WithField("order_id", orderID).Info("successfully processed payment completion")
+	// 	c.JSON(http.StatusOK, gin.H{"status": "processed"})
+	// default:
+	// 	logger.WithField("event_type", event.EventType).Debug("ignoring unhandled webhook event type")
+	// 	c.JSON(http.StatusOK, gin.H{"status": "ignored"})
+	// }
+}
+
 func (h *OrderHandler) CaptureOrder(c *gin.Context) {
 	orderID := c.Param("id")
 	if orderID == "" {
@@ -76,10 +113,29 @@ func (h *OrderHandler) CaptureOrder(c *gin.Context) {
 		return
 	}
 
-	if err := h.orderService.CaptureOrder(c, orderID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	order, err := h.orderService.GetOrder(c, orderID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "order id is not found" + err.Error()})
 		return
 	}
+
+	if order.UserID != utils.GetUserIDFromContext(c) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "order is not owned by current user"})
+		return
+	}
+
+	if order.Status != "pending" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "order status is not pending"})
+		return
+	}
+
+	if err := h.payService.CaptureOrder(c, orderID); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Errorf("failed to capture payment: %v", err)})
+		return
+	}
+
+	order.Status = "paid"
+	h.orderService.UpdateOrder(c, order)
 
 	c.JSON(http.StatusOK, gin.H{"status": "success"})
 }

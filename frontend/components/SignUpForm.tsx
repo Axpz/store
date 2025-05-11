@@ -45,6 +45,18 @@ export default function SignUpForm() {
   };
 
   return (
+    <>
+    <div>
+      <h2 className="mt-6 text-center text-4xl font-extrabold text-gray-900 dark:text-white">
+        Create your account
+      </h2>
+      <p className="mt-3 text-center text-lg text-gray-600 dark:text-gray-400">
+        Already have an account?{' '}
+        <a href="/login" className="font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400">
+          Sign in
+        </a>
+      </p>
+    </div>
     <Form.Root className="space-y-8" onSubmit={handleSubmit}>
       {error && (
         <div className="p-4 text-lg text-red-700 bg-red-100 rounded-lg dark:bg-red-900 dark:text-red-300" role="alert">
@@ -130,5 +142,6 @@ export default function SignUpForm() {
         </button>
       </Form.Submit>
     </Form.Root>
+    </>
   );
 } 

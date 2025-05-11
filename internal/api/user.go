@@ -23,10 +23,15 @@ type UserHandler struct {
 }
 
 // NewUserHandler 创建用户处理器
-func NewUserHandler(userService *service.UserService, jwtSecret string) *UserHandler {
+func NewUserHandler(
+	userService *service.UserService,
+	emailService *service.EmailService,
+	jwtSecret string,
+) *UserHandler {
 	return &UserHandler{
-		userService: userService,
-		jwtSecret:   jwtSecret,
+		userService:  userService,
+		emailService: emailService,
+		jwtSecret:    jwtSecret,
 	}
 }
 
@@ -280,6 +285,8 @@ func (h *UserHandler) DeleteUser(c *gin.Context) {
 }
 
 func (h *UserHandler) Verify(c *gin.Context) {
+	logger := utils.LoggerFromContext(c.Request.Context())
+
 	tokenString := c.Query("token")
 	if tokenString == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing token"})
@@ -295,8 +302,25 @@ func (h *UserHandler) Verify(c *gin.Context) {
 	}
 
 	user.Verified = &[]bool{true}[0]
+	user.ID = utils.GetUserIDFromEmail(user.Email)
 
-	h.userService.UpdateUser(c, &user)
+	userGet, err := h.userService.GetUser(c, user.ID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-	c.Redirect(http.StatusFound, "https://www.axpz.org/login?verify=success")
+	if userGet.Verified == nil || *userGet.Verified {
+		c.Redirect(http.StatusFound, "http://localhost:3000/login?verify=success")
+		return
+	}
+
+	if err := h.userService.UpdateUser(c, &user); err != nil {
+		logger.Error("failed to update user", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
+		return
+	}
+
+	logger.Info("user verified and updated successfully", zap.Any("user", user.Email))
+	c.Redirect(http.StatusFound, "http://localhost:3000/login?verify=success")
 }

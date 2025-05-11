@@ -1,7 +1,7 @@
 package config
 
 import (
-	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"time"
@@ -17,6 +17,7 @@ type Config struct {
 	Storage StorageConfig `yaml:"storage"`
 	JWT     JWTConfig     `yaml:"jwt"`
 	Email   EmailConfig   `yaml:"email"`
+	PayPal  PayPalConfig  `yaml:"paypal"`
 
 	Logger *zap.Logger
 }
@@ -44,120 +45,128 @@ type TablesConfig struct {
 	Products string `yaml:"products"`
 }
 
-// ServerConfig 表示服务器配置
+// ServerConfig
 type ServerConfig struct {
 	Port int    `yaml:"port"`
 	Host string `yaml:"host"`
 }
 
-// StorageConfig 表示存储配置
+// StorageConfig
 type StorageConfig struct {
 	Type string `yaml:"type"`
 	Path string `yaml:"path"`
 }
 
-// JWTConfig JWT配置
+// JWTConfig
 type JWTConfig struct {
 	Secret string        `yaml:"secret"`
 	Expire time.Duration `yaml:"expire"`
 }
 
-// EmailConfig 邮件配置
-type EmailConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	Username string `yaml:"username"`
-	Password string `yaml:"password"`
-	From     string `yaml:"from"`
-}
-
-// Load 从文件加载配置
-func Load(configPath string) (*Config, error) {
-	// 如果未指定配置文件路径，使用默认路径
+// Load reads configuration from the specified file path.
+// If the path is empty, it defaults to "config.yaml".
+// The function will exit the program immediately if any error occurs.
+func Load(configPath string) *Config {
+	// Use default config path if none is provided
 	if configPath == "" {
 		configPath = "config.yaml"
 	}
 
-	// 读取配置文件
+	log.Printf("load config from %s", configPath)
+
+	// Read the configuration file
 	data, err := os.ReadFile(configPath)
 	if err != nil {
-		return nil, fmt.Errorf("读取配置文件失败: %v", err)
+		log.Fatalf("fatal: failed to read config file: %v", err)
 	}
 
-	// 解析配置
+	// Parse the YAML data into the Config struct
 	var config Config
 	if err := yaml.Unmarshal(data, &config); err != nil {
-		return nil, fmt.Errorf("解析配置文件失败: %v", err)
+		log.Fatalf("fatal: failed to parse config file: %v", err)
 	}
 
-	// 验证配置
-	if err := config.validate(); err != nil {
-		return nil, err
-	}
+	// Load sensitive values from environment variables
+	config.Email.Password = os.Getenv(config.Email.PasswordEnv)
+	config.GitHub.Token = os.Getenv("GITHUB_API_TOKEN")
 
-	return &config, nil
+	// Validate the full configuration and exit on fatal errors
+	config.validate()
+
+	config.loadPaypalEnv()
+	config.validatePaypalEnv()
+
+	return &config
 }
 
-// validate 验证配置是否有效
-func (c *Config) validate() error {
-	// 检查存储类型
+// validate checks the entire configuration and exits the program if any critical error is found.
+func (c *Config) validate() {
+	c.validateStorageConfig()
+	c.validateGitHubConfig()
+	c.validateJWTConfig()
+	c.validateEmailConfig()
+}
+
+// validateStorageConfig ensures the storage configuration is valid.
+func (c *Config) validateStorageConfig() {
 	if c.Storage.Type == "" {
-		return fmt.Errorf("存储类型未设置")
+		log.Fatal("fatal: storage.type is required")
 	}
 
-	// 如果是 GitHub 存储，检查 GitHub Token
-	if c.Storage.Type == "github" {
-		token := os.Getenv("GITHUB_API_TOKEN")
-		if token == "" {
-			return fmt.Errorf("未设置 GITHUB_API_TOKEN 环境变量")
+	switch c.Storage.Type {
+	case "github":
+		// GitHub-specific validation is handled in validateGitHubConfig
+	case "local":
+		if c.Storage.Path == "" {
+			log.Fatal("fatal: storage.path is required when storage.type is 'local'")
 		}
+	default:
+		log.Fatalf("fatal: invalid storage.type: %s (expected 'github' or 'local')", c.Storage.Type)
+	}
+}
 
-		c.GitHub.Token = token
-
-		if c.GitHub.Repo.Owner == "" {
-			return fmt.Errorf("仓库所有者未设置")
-		}
-
-		if c.GitHub.Repo.Name == "" {
-			return fmt.Errorf("仓库名称未设置")
-		}
-
-		if c.GitHub.Repo.Branch == "" {
-			return fmt.Errorf("仓库分支未设置")
-		}
-
-		if c.GitHub.Repo.Tables.Path == "" {
-			return fmt.Errorf("表目录路径未设置")
-		}
-
-		if c.GitHub.Repo.Tables.Users == "" {
-			return fmt.Errorf("用户表文件名未设置")
-		}
-
-		if c.GitHub.Repo.Tables.Comments == "" {
-			return fmt.Errorf("评论表文件名未设置")
-		}
+// validateGitHubConfig checks GitHub storage configuration if storage.type is 'github'.
+func (c *Config) validateGitHubConfig() {
+	if c.Storage.Type != "github" {
+		return
 	}
 
-	// 如果是本地存储，检查存储路径
-	if c.Storage.Type == "local" && c.Storage.Path == "" {
-		return fmt.Errorf("本地存储路径未设置")
+	if c.GitHub.Token == "" {
+		log.Fatal("fatal: GITHUB_API_TOKEN is required for GitHub storage")
 	}
+	if c.GitHub.Repo.Owner == "" {
+		log.Fatal("fatal: github.repo.owner is required")
+	}
+	if c.GitHub.Repo.Name == "" {
+		log.Fatal("fatal: github.repo.name is required")
+	}
+	if c.GitHub.Repo.Branch == "" {
+		log.Fatal("fatal: github.repo.branch is required")
+	}
+	if c.GitHub.Repo.Tables.Path == "" {
+		log.Fatal("fatal: github.repo.tables.path is required")
+	}
+	if c.GitHub.Repo.Tables.Users == "" {
+		log.Fatal("fatal: github.repo.tables.users is required")
+	}
+	if c.GitHub.Repo.Tables.Comments == "" {
+		log.Fatal("fatal: github.repo.tables.comments is required")
+	}
+}
 
-	// 如果JWT配置未设置，使用GitHub Token
+// validateJWTConfig checks the JWT configuration and applies defaults if not set.
+func (c *Config) validateJWTConfig() {
 	if c.JWT.Secret == "" {
 		c.JWT.Secret = c.GitHub.Token
+		log.Println("info: jwt.secret not set, using github.token as fallback")
 	}
-
-	// 如果JWT过期时间未设置，使用7天
 	if c.JWT.Expire == 0 {
 		c.JWT.Expire = 7 * 24 * time.Hour
+		log.Println("info: jwt.expire not set, using default value of 7 days")
 	}
-
-	return nil
 }
 
-// GetTablePath 获取指定表的完整文件路径
+// GetTablePath tables path
 func (c *Config) GetTablePath(tableName string) string {
 	switch tableName {
 	case "users":

@@ -1,9 +1,11 @@
 package service
 
 import (
+	"crypto/tls"
 	"fmt"
 	"net/smtp"
 
+	"github.com/Axpz/store/internal/config"
 	"github.com/Axpz/store/internal/utils"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -24,7 +26,7 @@ const (
 	</p>
 	<p>If the link is not clickable, please copy and paste the following URL into your browser:</p>
 	<p style="word-break: break-all;">%s</p>
-	<p>This link is valid for 24 hours. After that, it will expire. If you did not initiate this request, please ignore this email.</p>
+	<p>This link is valid for 7 days. After that, it will expire. If you did not initiate this request, please ignore this email.</p>
 	<br>
 	<p>Sincerely,</p>
 	<p><strong>axpz.org Team</strong></p>
@@ -39,7 +41,7 @@ const (
 	</p>
 	<p>如果链接无法点击，请将以下地址复制到浏览器中打开：</p>
 	<p style="word-break: break-all;">%s</p>
-	<p>该链接有效期为 24 小时，过期将无法使用。如非本人操作，请忽略此邮件。</p>
+	<p>该链接有效期为 7 天，过期将无法使用。如非本人操作，请忽略此邮件。</p>
 	<br>
 	<p>此致</p>
 	<p><strong>axpz.org 团队</strong></p>
@@ -58,37 +60,89 @@ type EmailService struct {
 }
 
 // NewEmailService 创建邮件服务
-func NewEmailService(host string, port int, username, password, from string) *EmailService {
+func NewEmailService(cfg *config.Config) *EmailService {
 	return &EmailService{
-		host:     host,
-		port:     port,
-		username: username,
-		password: password,
-		from:     from,
+		host:     cfg.Email.SMTPServer,
+		port:     cfg.Email.SMTPPort,
+		username: cfg.Email.Username,
+		password: cfg.Email.Password,
+		from:     cfg.Email.From,
 	}
 }
 
 func (s *EmailService) SendVerificationEmail(c *gin.Context, verificationLink, userEmail string) error {
 
 	subject := "【axpz.org】Email Verification / 邮箱验证通知"
-
 	body := fmt.Sprintf(emailTemplate, verificationLink, verificationLink, verificationLink, verificationLink)
-
 	msg := fmt.Sprintf("To: %s\r\n"+
 		"From: axpz.org <%s>\r\n"+
 		"Subject: %s\r\n"+
 		"MIME-Version: 1.0\r\n"+
 		"Content-Type: text/html; charset=UTF-8\r\n\r\n"+
 		"%s", userEmail, s.from, subject, body)
+	msgBytes := []byte(msg)
 
 	logger := utils.LoggerFromContext(c.Request.Context())
 	logger.Info("SendVerificationEmail", zap.String("email", userEmail), zap.String("link", verificationLink))
 
 	auth := smtp.PlainAuth("", s.username, s.password, s.host)
-	logger.Info("SendVerificationEmail", zap.String("email", userEmail), zap.String("link", verificationLink))
+	logger.Info("SendVerificationEmail", zap.String("auth", fmt.Sprintf("%v", auth)))
 
 	addr := fmt.Sprintf("%s:%d", s.host, s.port)
-	logger.Info("SendVerificationEmail", zap.String("email", userEmail), zap.String("link", verificationLink))
+	logger.Info("SendVerificationEmail", zap.String("addr", addr))
 
-	return smtp.SendMail(addr, auth, s.from, []string{userEmail}, []byte(msg))
+	// 连接到 SMTP 服务器 (SSL)
+	conn, err := tls.Dial("tcp", addr, &tls.Config{
+		InsecureSkipVerify: true, // TODO fix
+		ServerName:         s.host,
+	})
+	if err != nil {
+		logger.Error("tls.Dial error", zap.Error(err))
+		return err
+	}
+	defer conn.Close()
+
+	// 创建 SMTP 客户端
+	client, err := smtp.NewClient(conn, s.host)
+	if err != nil {
+		logger.Error("smtp.NewClient error", zap.Error(err))
+		return err
+	}
+	defer client.Close()
+
+	// 进行身份验证
+	if err = client.Auth(auth); err != nil {
+		logger.Error("client.Auth error", zap.Error(err))
+		return err
+	}
+
+	// 设置发件人
+	if err = client.Mail(s.from); err != nil {
+		logger.Error("client.Mail error", zap.Error(err))
+		return err
+	}
+
+	// 设置收件人
+	if err = client.Rcpt(userEmail); err != nil {
+		logger.Error("client.Rcpt error", zap.Error(err))
+		return err
+	}
+
+	// 开始数据传输
+	wc, err := client.Data()
+	if err != nil {
+		logger.Error("client.Data error", zap.Error(err))
+		return err
+	}
+	defer wc.Close()
+
+	// 写入邮件内容
+	_, err = wc.Write(msgBytes)
+	if err != nil {
+		logger.Error("wc.Write error", zap.Error(err))
+		return err
+	}
+
+	logger.Info("SendVerificationEmail", zap.String("email", userEmail), zap.String("status", "success"))
+	return nil
 }

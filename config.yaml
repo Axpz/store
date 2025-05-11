@@ -1,4 +1,5 @@
 github:
+  token_env: "GITHUB_API_TOKEN"
   repo:
     owner: "Axpz"
     name: "store"
@@ -14,5 +15,23 @@ server:
   host: "localhost"
 
 storage:
-  type: "github" # 可选值: "github" 或 "local"
-  path: "tables" # 仅当 type 为 "local" 时使用 
+  type: "github" # Optional values: "github" or "local"
+  path: "tables" # Used only when type is "local"
+
+email:
+  smtp_server: "smtp.qq.com"
+  smtp_port: 465
+  username: "116586276@qq.com"     # SMTP login username
+  from: "116586276@qq.com"  # Displayed sender name and address
+  password_env: "SMTP_AUTH_CODE_QQ"    # Name of the environment variable storing the SMTP authorization code
+
+paypal:
+  # Environment setting: Can be "development" or "production"
+  # It's essential to use the correct environment to ensure secure transactions.
+  env: "development"  # Change to "production" for live transactions
+
+  # Environment variables for PayPal credentials
+  # These environment variables will securely store sensitive information.
+  client_id_env: "PAYPAL_CLIENT_ID"
+  client_secret_env: "PAYPAL_CLIENT_SECRET"
+  webhook_id_env: "PAYPAL_WEBHOOK_ID"
