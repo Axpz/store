@@ -45,12 +45,12 @@
   "zYy-i2V19LYSrL-uaFt4bA": {
     "id": "zYy-i2V19LYSrL-uaFt4bA",
     "username": "axpzhang@gmail.com",
-    "password": "$2a$10$AaF.i4oOzPn8eVlIvTyLkubtWZbYobg2syKhrB16Z4w9.Og9shsQ.",
+    "password": "$2a$10$wa2/BxNt.ghyaVmVT1/zPOOBu9AGmK/20RFP3wx.2gfPXYnpSkwN6",
     "email": "axpzhang@gmail.com",
     "plan": "",
     "created": 1746944006,
-    "updated": 1746944006,
+    "updated": 1746957387,
     "last_login": 1746944006,
-    "verified": false
+    "verified": true
   }
 }
