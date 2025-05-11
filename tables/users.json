@@ -41,5 +41,16 @@
     "updated": 1746866063,
     "last_login": 1746865306,
     "verified": true
+  },
+  "zYy-i2V19LYSrL-uaFt4bA": {
+    "id": "zYy-i2V19LYSrL-uaFt4bA",
+    "username": "axpzhang@gmail.com",
+    "password": "$2a$10$AaF.i4oOzPn8eVlIvTyLkubtWZbYobg2syKhrB16Z4w9.Og9shsQ.",
+    "email": "axpzhang@gmail.com",
+    "plan": "",
+    "created": 1746944006,
+    "updated": 1746944006,
+    "last_login": 1746944006,
+    "verified": false
   }
 }
