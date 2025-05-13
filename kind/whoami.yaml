@@ -1,0 +1,49 @@
+# whoami.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  ports:
+    - port: 80
+      targetPort: 80
+  selector:
+    app: whoami
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: whoami
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: whoami
+  template:
+    metadata:
+      labels:
+        app: whoami
+    spec:
+      containers:
+        - name: whoami
+          image: traefik/whoami
+          ports:
+            - containerPort: 80
+---
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: whoami-ingressroute
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: Host(`local.test`)
+      kind: Rule
+      services:
+        - name: whoami
+          port: 80
+
