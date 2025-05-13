@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import * as Form from '@radix-ui/react-form';
 import { useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/apifetch';
 
 export default function SignUpForm() {
   const router = useRouter();
@@ -22,18 +23,13 @@ export default function SignUpForm() {
     };
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/signup', {
+      const response = await apiFetch('/api/auth/signup', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        data: JSON.stringify(data),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to sign up');
-      }
 
       // Redirect to login page after successful signup
       router.push('/login');

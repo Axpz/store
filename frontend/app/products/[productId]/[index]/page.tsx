@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowRightIcon } from "@radix-ui/react-icons";
 import { convertMarkdownToHtml } from "@/lib/markdown";
 import { getHashKey } from "@/lib/utils";
+import { apiFetch } from "@/lib/apifetch";
 interface Question {
   number: string | null;
   text: string | null;

@@ -18,7 +18,7 @@ export default function Home() {
     error: fetchError,
     isLoading: fetchIsLoading,
   } = useSWR<ProductsResponse, Error>(
-    productsArray.length === 0 ? "http://localhost:8080/api/products" : null,
+    productsArray.length === 0 ? "/api/products" : null,
     fetchAndStoreProducts,
     { revalidateOnFocus: false }
   );

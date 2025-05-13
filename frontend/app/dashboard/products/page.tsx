@@ -14,7 +14,7 @@ export default function ProductsPage() {
 
   useEffect(() => {
     if (user && productsArray.length === 0) {
-      fetchAndStoreProducts("http://localhost:8080/api/products").then((products) => {
+      fetchAndStoreProducts("/api/products").then((products) => {
         setProducts(products.data);
       });
     }

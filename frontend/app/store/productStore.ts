@@ -27,9 +27,21 @@ export const useOrderStore = create<OrderState>()((set, get) => ({
   ordersArray: [],
   ordersMap: new Map(),
   setOrders: (orders) => {
-    const newOrdersMap = new Map();
-    orders.forEach((order) => newOrdersMap.set(order.id, order));
-    set({ ordersArray: orders, ordersMap: newOrdersMap });
+    if (!Array.isArray(orders)) {
+      // if null、undefined, set to Map
+      set({
+        ordersArray: [],
+        ordersMap: new Map(),
+      });
+      return;
+    }
+  
+    const newOrdersMap = new Map(orders.map(order => [order.id, order]));
+  
+    set({
+      ordersArray: orders,
+      ordersMap: newOrdersMap,
+    });
   },
   getOrderById: (id) => get().ordersMap.get(id),
 }));

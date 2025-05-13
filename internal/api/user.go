@@ -167,7 +167,7 @@ func (h *UserHandler) SignUp(c *gin.Context) {
 		return
 	}
 
-	verificationLink := fmt.Sprintf("https://www.axpz.org/api/auth/verify?token=%s", tokenString)
+	verificationLink := fmt.Sprintf("https://dev.axpz.org/api/auth/verify?token=%s", tokenString)
 	logger.Info("Verification link", zap.String("link", verificationLink))
 
 	if err := h.emailService.SendVerificationEmail(c, verificationLink, user.Email); err != nil {

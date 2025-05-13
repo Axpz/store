@@ -10,7 +10,7 @@ import { log } from "console";
 import { toast } from "react-toastify";
 import { Order, OrdersResponse } from "@/lib/api";
 import { useOrderStore } from "@/app/store/productStore";
-
+import { apiFetch } from "@/lib/apifetch";
 
 export default function OrdersPage() {
   const { user, isLoading } = useAuth();
@@ -20,17 +20,13 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       console.log("fetchOrders");
-      const response = await fetch("http://localhost:8080/api/orders", {
-        credentials: "include",
+      const response = await apiFetch("/api/orders", {
         headers: {
           "Content-Type": "application/json",
         },
       });
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
 
-      const respOrders: OrdersResponse = await response.json();
+      const respOrders: OrdersResponse = await response;
       setOrders(respOrders.data);
     } catch (error: any) {
       toast.error(`获取订单失败: ${error.message}`);
@@ -49,14 +45,15 @@ export default function OrdersPage() {
           Order Management
         </h2>
 
-        {/* Order management content will go here */}
-        <div className="container mx-auto py-8">
+        {ordersArray == null || ordersArray.length === 0 ? (
+          <div className="text-center text-gray-500">No orders yet</div>
+        ) : (
           <div className="grid gap-4 grid-cols-auto-fit">
             {ordersArray.map((order) => (
               <OrderItem key={order.id} order={order} />
             ))}
           </div>
-        </div>
+        )}
       </div>
     </>
   );

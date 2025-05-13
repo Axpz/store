@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { redirect, usePathname, useRouter } from 'next/navigation';
+import { apiFetch } from '@/lib/apifetch';
 
 interface User {
   id: string;
@@ -35,17 +36,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/auth/logout', {
+      const response = await apiFetch('/api/auth/logout', {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-
-      if (!response.ok) {
-        throw new Error('Logout failed');
-      }
 
       setUser(null);
       localStorage.removeItem('user');

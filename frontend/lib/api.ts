@@ -1,5 +1,6 @@
 import { useProductStore } from "@/app/store/productStore";
 import { toast } from "react-toastify";
+import { apiFetch } from "./apifetch";
 
 export interface Product {
   id: string;
@@ -59,27 +60,13 @@ export interface OrdersResponse {
 
 export const fetchAndStoreProducts = async (url: string) => {
   try {
-    const response = await fetch(url, {
-      credentials: "include",
+    const response = await apiFetch(url, {
       headers: {
         "Content-Type": "application/json",
       },
     });
 
-    if (!response.ok) {
-      let errorMessage = `HTTP error! status: ${response.status}`;
-      try {
-        const errorData = await response.json();
-        if (errorData && errorData.message) {
-          errorMessage += `: ${errorData.message}`;
-        }
-      } catch (parseError) {
-        console.error("Failed to parse error JSON:", parseError);
-      }
-      throw new Error(errorMessage);
-    }
-
-    const respJson: ProductsResponse = await response.json();
+    const respJson: ProductsResponse = await response;
     useProductStore.getState().setProducts(respJson.data);
     return respJson;
   } catch (error: any) {

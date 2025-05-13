@@ -1,0 +1,96 @@
+# frontend Service and Deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: store-frontend
+  namespace: default
+spec:
+  ports:
+    - port: 80
+      targetPort: 3000
+  selector:
+    app: store-frontend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-frontend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-frontend
+  template:
+    metadata:
+      labels:
+        app: store-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: store-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          envFrom:
+            - configMapRef:
+                name: zxenv
+---
+# backend Service and Deployment
+apiVersion: v1
+kind: Service
+metadata:
+  name: store-backend
+  namespace: default
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: store-backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: store-backend
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: store-backend
+  template:
+    metadata:
+      labels:
+        app: store-backend
+    spec:
+      containers:
+        - name: backend
+          image: store:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: zxenv
+---
+# IngressRoute
+apiVersion: traefik.io/v1alpha1
+kind: IngressRoute
+metadata:
+  name: store-ingressroute
+  namespace: default
+spec:
+  entryPoints:
+    - web
+  routes:
+    - match: PathPrefix(`/api`)
+      kind: Rule
+      services:
+        - name: store-backend
+          port: 80
+    - match: PathPrefix(`/`)
+      kind: Rule
+      services:
+        - name: store-frontend
+          port: 80

@@ -6,6 +6,7 @@ import { toast } from 'react-toastify';
 import { OrderRequest, Product, OrdersResponse } from '@/lib/api';
 
 import { Order } from '@/lib/api';
+import { apiFetch } from '@/lib/apifetch';
 
 interface PayPalButtonProps {
   product: Product; // 更精确的类型
@@ -32,7 +33,7 @@ const PayPalButtonComponent: React.FC<PayPalButtonProps> = ({ product, onSuccess
       total_amount: product.price
     };
   
-    return fetch('http://localhost:8080/api/orders', {
+    return fetch('/api/orders', {
       method: 'POST',
       credentials: 'include',
       headers: {
@@ -53,15 +54,14 @@ const PayPalButtonComponent: React.FC<PayPalButtonProps> = ({ product, onSuccess
 
   const handleApprove = async (data: any, actions: any) => {
     try {
-        const captureResponse = await fetch(`http://localhost:8080/api/orders/${data.orderID}/capture`, {
+        const captureResponse = await apiFetch(`/api/orders/${data.orderID}/capture`, {
         method: 'POST',
-        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
       });
 
-      const captureData = await captureResponse.json();
+      const captureData = await captureResponse;
       console.log('handleApprove - captureData:', captureData);
 
       if (captureData?.status === 'success') {

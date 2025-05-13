@@ -20,6 +20,7 @@ import {
   ArrowDownIcon,
 } from "@radix-ui/react-icons";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export interface ProductItemProps {
   product: Product;
@@ -89,6 +90,18 @@ const ProductItem: React.FC<ProductItemProps> = ({
 
         {isExpanded && (
           <div className="mt-2 grid gap-2">
+            <div className="mt-1 flex flex-col gap-1">
+              {product.content.map((c, i) => (
+                <Link
+                  href={`/products/${product.id}/${i}`}
+                  key={c}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline transition-colors"
+                >
+                  {c}
+                </Link>
+              ))}
+            </div>
+                
             <div>
               <Label className="text-sm text-gray-500">描述:</Label>
               <p className="text-sm">{product.description}</p>

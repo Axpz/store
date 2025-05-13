@@ -4,6 +4,7 @@ import { useState } from 'react';
 import * as Form from '@radix-ui/react-form';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useUser } from '../context/UserContext';
+import { apiFetch } from '@/lib/apifetch';
 
 export default function SignInForm() {
   const router = useRouter();
@@ -27,21 +28,15 @@ export default function SignInForm() {
     };
 
     try {
-      const response = await fetch('http://localhost:8080/api/auth/login', {
+      const response = await apiFetch('/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        credentials: 'include',
-        body: JSON.stringify(data),
+        data: JSON.stringify(data),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Login failed');
-      }
-
-      const result = await response.json();
+      const result = await response;
       
       // 保存用户信息
       const userInfo = {

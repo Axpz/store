@@ -22,15 +22,15 @@ FRONTEND_DIR = frontend
 NPM_CMD = pnpm
 
 # --- Docker ---
-IMAGE_NAME = store-app
-DOCKER_TAG ?= $(if $(filter $(BUILD_ENV),dev),dev-$(GIT_COMMIT),$(GIT_COMMIT))
+IMAGE_NAME = store
+DOCKER_TAG ?= $(if $(filter $(BUILD_ENV),dev),latest,$(GIT_COMMIT))
 DOCKERFILE = Dockerfile
 
 .PHONY: all build dev prod run tidy test clean get-deps \
         frontend-install frontend-build frontend-clean \
         build-all run-all build-backend \
         docker-build docker-buildx docker-push \
-        test-coverage test-race test-bench
+        test-coverage test-race test-bench deploy
 
 # --- Main targets ---
 
@@ -86,6 +86,7 @@ build-linux:
 docker-build:
 	@echo "🐳 Building Docker image: $(IMAGE_NAME):$(DOCKER_TAG)"
 	docker build -t $(IMAGE_NAME):$(DOCKER_TAG) -f $(DOCKERFILE) .
+	docker build -t $(IMAGE_NAME)-$(FRONTEND_DIR):$(DOCKER_TAG) -f ./$(FRONTEND_DIR)/$(DOCKERFILE) .
 
 docker-buildx:
 	docker buildx build \
@@ -110,3 +111,5 @@ test-race:
 
 test-bench:
 	$(GOTEST) -v -bench=. ./...
+deploy:
+	cd ./kind && bash deploy.sh
