@@ -28,7 +28,7 @@ DOCKERFILE = Dockerfile
 
 .PHONY: all build dev prod run tidy test clean get-deps \
         frontend-install frontend-build frontend-clean \
-        build-all run-all build-backend \
+        build-all run-all backend-build \
         docker-build docker-buildx docker-push \
         test-coverage test-race test-bench deploy
 
@@ -48,9 +48,9 @@ buildprod:
 	$(MAKE) docker-build BUILD_ENV=production
 
 # --- Build backend + frontend ---
-build-all: frontend-install frontend-build build-backend
+build-all: frontend-install frontend-build backend-build
 
-build-backend:
+backend-build:
 	$(GOBUILD) $(LDFLAGS) -o $(BINARY_OUT) ./cmd/
 
 run:

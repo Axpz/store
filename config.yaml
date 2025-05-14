@@ -2,7 +2,7 @@ github:
   token_env: "GITHUB_API_TOKEN"
   repo:
     owner: "Axpz"
-    name: "store"
+    name: "db_tables"
     branch: "main"
     tables:
       path: "tables"

@@ -67,3 +67,7 @@ kind load docker-image store:latest --name "$CLUSTER_NAME"
 echo "🚀 Deploying application..."
 kubectl create configmap zxenv --from-env-file="$HOME/.zxenv" || true
 kubectl apply -f store-app.yaml
+# forece rollout
+kubectl rollout restart deployment/store-frontend
+kubectl rollout restart deployment/store-backend
+
